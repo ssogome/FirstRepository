@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+</head>
+<body>      			
+      <table class="component" border="1"  cellspacing="0" cellpadding="10" style="display:none" >
+	   <caption  style="font-size:2.5em;"> Catalog Part Component(s)</caption>
+	   <thead style='background-color:gray; color:white'>
+		   <tr>
+		       <td>Qty</td>
+			   <td>Part No </td>
+			    <td> Description </td>
+				<td> Price(USD) </td>
+				<td>  Extended</td>
+		   </tr>
+		</thead>
+		      <tbody data-bind="foreach: ArrToShow" >
+		    <tr>
+		    <td data-bind="text: qty"></td>
+			<td data-bind="text: part"></td>			
+			<td data-bind="text: des"></td>
+			<td data-bind="text: price"></td>
+			<td data-bind="text: ext"></td>
+			</tr>
+			</tbody>			
+	   </table>
+</body>
+</html>
+

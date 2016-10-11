@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/knockout-3.3.0.js"></script>
+<script  type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery.SPServices-2014.02.min.js"></script>
+<link  type="text/css" rel="stylesheet" href="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/HTML%20Library/Catalog.css" />
+
+
+<script type="text/javascript">
+   var data = new Array();
+  
+  $(document).ready(function(){
+	  SP.SOD.executeFunc('sp.js', 'SP.ClientContext', function doLoad(){});	 
+	  
+	  ko.applyBindings(new CatalogViewModel());
+	  //$("table.clickable tr").click(function(){alert('row is clicked');});
+	 
+});	
+
+  function CatalogViewModel(){ 
+				var self = this;
+			   
+		      self.infraslistparts     = ko.observableArray();
+		      self.netlistparts        = ko.observableArray();
+			  self.Nbladelistparts     = ko.observableArray();
+			  self.NSystlistparts      = ko.observableArray();
+			  self.Storlistparts       = ko.observableArray();
+			  self.Stor3listparts      = ko.observableArray();
+			  self.bladelistparts      = ko.observableArray();
+			  self.Systlistparts       = ko.observableArray();
+			  self.hdsblistparts       = ko.observableArray(); 
+			  self.infrasArr1		   = ko.observableArray();			
+			  self.infrasArr2		   = ko.observableArray();
+			  self.infrasArr3		   = ko.observableArray();
+			  self.infrasArr4		   = ko.observableArray();
+			  self.infrasArr5		   = ko.observableArray(); 
+			  self.HostedDSArr		   = ko.observableArray(); 
+			  self.NetArr1		 	   = ko.observableArray(); 
+			  self.NetArr2		  	   = ko.observableArray();
+			  self.NetArr3		       = ko.observableArray(); 
+			  self.bladeArr1		   = ko.observableArray();
+			  self.bladeArr2		   = ko.observableArray();
+			  self.NSystArr1		   = ko.observableArray();
+			  self.NSystArr2		   = ko.observableArray();
+			  self.NSystArr3		   = ko.observableArray();
+			  self.NSystArr4		   = ko.observableArray();
+			  self.ArrToShow    	   = ko.observableArray();
+			  self.NbladeArr1		   = ko.observableArray();
+			  self.StorArr1		       = ko.observableArray();
+			  self.StorArr2	    	   = ko.observableArray();
+			  self.Stor3Arr1		   = ko.observableArray();
+			  self.SystArr1		       = ko.observableArray();
+			  self.SystArr2		       = ko.observableArray();
+			  self.SystArr3		       = ko.observableArray();
+			 
+		 self._loadList = function(){ 														
+				 getRequests(self.onGetDefaultViewSuccessed);  
+		  }
+		 self.onGetDefaultViewSuccessed = function(itemList){ 
+		      for(var i=0; i<itemList.length; i++){			  
+			    if(itemList[i].Title ==  'HPSW Catalog Version 3.0' && itemList[i].RecommendedFor !=  null && itemList[i].Visible == true ){ 
+			//   alert(itemList[i].Visible + '====' + itemList[i].Group+ '\n'+ itemList[i].Part_x0020__x0023_ + '\n'+ itemList[i].Part_x0020_Description+ '\n'+ itemList[i].Parent_x0020__x0023__x0020__x002);
+			       switch(itemList[i].Group)
+					{
+					    case 'Infrastructure':
+			           self.infraslistparts.push(new requestEntry(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;
+					     case 'Storage - 3PAR':	
+                       self.Stor3listparts.push(new requestEntryS3(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;  
+						  case 'Storage':	
+                        self.Storlistparts.push(new requestEntryS(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;  
+							case 'Networking':						
+                        self.netlistparts.push(new requestEntryN(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break; 	
+							case 'Non-x86/x64 Blades':	
+					     self.Nbladelistparts.push(new requestEntryNB(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+	        												itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;
+							case 'Non-x86/x64 Systems':	 
+						self.NSystlistparts.push(new requestEntryNS(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;	
+							case 'x86/x64 Blades':
+						self.bladelistparts.push(new requestEntryb(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;	
+							case 'x86/x64 Systems':
+						self.Systlistparts.push(new requestEntrySys(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+			    											itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;	
+							case 'Hosted Digital Safe Builds':	
+						self.hdsblistparts.push(new requestEntryhdsb(itemList[i].Group,
+															itemList[i].Part_x0020__x0023_,															
+														    itemList[i].Part_x0020_Description,														
+															itemList[i].RecommendedFor,    
+															itemList[i].Unit_x0020_Cost,																											
+															itemList[i].Id,
+															itemList[i].__metadata.etag)); 
+															break;
+                             default:
+								break;
+					}
+				}
+				
+						//Build the part components
+						if(itemList[i].Group == 'Infrastructure' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'PDU--v3.01'){						      
+							//	SP.UI.Notify.addNotification('building components....' , false);
+								 self.infrasArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Infrastructure' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Empty Rack No-skins Bundle--v3.05'){						     							
+								 self.infrasArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Infrastructure' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'PDU-Israel--v3.02'){						     							
+								 self.infrasArr3.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Infrastructure' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Empty Rack Bundle--v3.06'){						     							
+								 self.infrasArr4.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Infrastructure' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Blade Enclosure Bundle--v3.07'){						     							
+								 self.infrasArr5.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Networking' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Network Spoke Switch--v3.03'){	     							
+								 self.NetArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Networking' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Network ToR Switch--v3.03'){	     							
+								 self.NetArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Networking' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Network Core Switch--v3.03'){	     							
+								 self.NetArr3.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'x86/x64 Blades' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'LG727021-B21--v3.01'){	     							
+								 self.bladeArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'x86/x64 Blades' && itemList[i].Parent_x0020__x0023__x0020__x002 == '727021-B21--v3.03'){	     							
+								 self.bladeArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Non-x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'SunT4--V3.02 (not updated since 2014)'){	 				
+								 self.NSystArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Non-x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 =='SunT5--V3.01' ){  				
+								 self.NSystArr4.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Non-x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'IBMPSS822-6c'){							
+								 self.NSystArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Non-x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'AT101A--v.3.02'){	 					
+								 self.NSystArr3.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Hosted Digital Safe Builds' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'Z1-063-2-HP'){     							
+								 self.HostedDSArr.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Non-x86/x64 Blades' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'BL860c i4 IA64 HPVM Host--v3.03'){		
+								 self.NbladeArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if( itemList[i].Parent_x0020__x0023__x0020__x002 == 'FC Edge Switch --v3.03'){						
+								 self.StorArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Parent_x0020__x0023__x0020__x002 == 'FC Core Switch --v3.04'){	 					
+								 self.StorArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'Storage - 3PAR' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'QR511A--v3.02'){						
+								 self.Stor3Arr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == '755258-B21--v3.02'){					
+								 self.SystArr1.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == '767032-B21--v3.02'){					
+								 self.SystArr2.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}
+						if(itemList[i].Group == 'x86/x64 Systems' && itemList[i].Parent_x0020__x0023__x0020__x002 == 'PDB-767032-B21--v3.02'){					
+								 self.SystArr3.push({
+									qty:  itemList[i].Quanity_x0020__x002d__x0020_if_x,
+									part:  itemList[i].Part_x0020__x0023_,
+									des:  itemList[i].Part_x0020_Description,
+									price: itemList[i].Unit_x0020_Cost,	
+									ext:  parseFloat(itemList[i].Extended_x0020_Cost).toFixed(2),
+								 }); 								
+						}				
+			}
+		}
+	 self.showComponentInfras =function(sender, args){	                   
+		   switch(sender.infraspart()){ 
+		        case 'PDU--v3.01':		   				
+					  if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.infrasArr1().slice(0));				
+					  }
+					  else  self.ArrToShow(self.infrasArr1().slice(0));	
+				      $('.component').show();				
+					break;
+				case 'Empty Rack No-skins Bundle--v3.05':  	
+					    if(self.ArrToShow().length != 0){
+						    self.ArrToShow().splice (0,self.ArrToShow().length);
+							self.ArrToShow(self.infrasArr2().slice(0));					
+					    }
+						else self.ArrToShow(self.infrasArr2().slice(0));
+						$('.component').show();	
+					break;
+				case 'PDU-Israel--v3.02':  
+				    if(self.ArrToShow().length != 0){
+						self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.infrasArr3().slice(0));											
+					 }
+					 else self.ArrToShow(self.infrasArr2().slice(0));
+					 $('.component').show();
+					break;
+				case 'Empty Rack Bundle--v3.06': 
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.infrasArr4().slice(0));	
+					 }
+					 else self.ArrToShow(self.infrasArr4().slice(0));
+					$('.component').show();	
+					break;
+				case 'Blade Enclosure Bundle--v3.07': 
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+					    self.ArrToShow(self.infrasArr5().slice(0));
+					}
+					 else self.ArrToShow(self.infrasArr4().slice(0));	
+					$('.component').show();	
+					break;				
+				default:
+					break;
+		   }
+		   
+	 }
+	self.showComponentNet = function(sender, args){		
+		    switch(sender.netpart()){
+				case 'Network Spoke Switch--v3.03': 
+					if(self.ArrToShow().length != 0){
+						self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NetArr1().slice(0));	
+					}
+					else self.ArrToShow(self.NetArr1().slice(0));	
+					$('.component').show();	
+					break;
+				case 'Network ToR Switch--v3.03':   
+					if(self.ArrToShow().length != 0){	
+						self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NetArr2().slice(0));
+					}	
+					else self.ArrToShow(self.NetArr2().slice(0));		
+					$('.component').show();	
+					break;
+				case 'Network Core Switch--v3.03': 	
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NetArr3().slice(0));	
+					}
+					else self.ArrToShow(self.NetArr3().slice(0));
+					$('.component').show();	
+					break;	
+                default:
+					break;
+			}
+	}							
+	self.showComponentblade = function(sender, args){		
+		 switch(sender.bladepart()){
+			    case 'LG727021-B21--v3.01': 
+				    if(self.ArrToShow().length != 0){
+					     self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.bladeArr1().slice(0));	
+					}
+					else self.ArrToShow(self.bladeArr1().slice(0));
+					$('.component').show();	
+					break;
+				case '727021-B21--v3.03': 
+				    if(self.ArrToShow().length != 0){
+					     self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.bladeArr2().slice(0));
+					}
+					else self.ArrToShow(self.bladeArr2().slice(0));
+					$('.component').show();	
+					break;			
+                default:
+					break;
+		 }
+	}		
+	self.showComponentNSyst = function(sender, args){
+		 switch(sender.NSystpart()){
+				case 'SunT4--V3.02 (not updated since 2014)':  
+				     if(self.ArrToShow().length != 0){
+					     self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NSystArr1().slice(0));	
+					}
+					else self.ArrToShow(self.NSystArr1().slice(0));
+					$('.component').show();	
+					break;
+				case 'IBMPSS822-6c':  
+				    if(self.ArrToShow().length != 0){
+					     self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NSystArr2().slice(0));	
+					}
+					else self.ArrToShow(self.NSystArr2().slice(0));
+					$('.component').show();	
+					break;
+				case 'AT101A--v.3.02':	 	
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NSystArr3().slice(0));	
+					}
+					else self.ArrToShow(self.NSystArr3().slice(0));
+						$('.component').show();	
+					break;
+				case 'SunT5--V3.01':
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NSystArr4().slice(0));	
+					}
+					else self.ArrToShow(self.NSystArr4().slice(0));
+						$('.component').show();	
+					break;
+				default:
+					break;	
+		 }		 
+    }
+    self.showComponentHostedDS = function(sender, args){		
+		 switch(sender.hdsbpart()){
+				case 'Z1-063-2-HP':
+				    if(self.ArrToShow().length != 0){
+					    self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.HostedDSArr().slice(0));	
+				    }
+					else self.ArrToShow(self.HostedDStArr().slice(0));
+					$('.component').show();	
+					break;
+				default:
+					break;	
+		}
+	}
+	self.showComponentNblade = function(sender, args){		
+		 switch(sender.Nbladepart()){
+				case 'BL860c i4 IA64 HPVM Host--v3.03':	   	
+				    if(self.ArrToShow().length != 0){
+					     self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.NbladeArr1().slice(0));	
+					}
+					else self.ArrToShow(self.NbladeArr1().slice(0));
+					$('.component').show();	
+					break;
+				default:
+					break;	
+		}
+	}
+	self.showComponentStor = function(sender, args){		
+		 switch(sender.Storpart()){
+				case 'FC Edge Switch --v3.03':
+                    if(self.ArrToShow().length != 0){	
+                         self.ArrToShow().splice (0,self.ArrToShow().length);					
+						self.ArrToShow(self.StorArr1().slice(0));	
+					}
+					else self.ArrToShow(self.StorArr1().slice(0));
+					$('.component').show();	
+					break;
+				case 'FC Core Switch --v3.04': 
+                    if(self.ArrToShow().length != 0){	
+                         self.ArrToShow().splice (0,self.ArrToShow().length);							
+						self.ArrToShow(self.StorArr2().slice(0));
+					}	
+					else self.ArrToShow(self.StorArr2().slice(0));	
+					$('.component').show();	
+					break;	
+				default:
+					break;	
+		}
+	}
+	self.showComponentStor3 = function(sender, args){
+		// alert('row is clicked  ' + sender.Stor3part() + '\n' );
+		 switch(sender.Stor3part()){
+				case 'QR511A--v3.02':   
+                     if(self.ArrToShow().length != 0){	
+                         self.ArrToShow().splice (0,self.ArrToShow().length);					 
+						self.ArrToShow(self.Stor3Arr1().slice(0));	
+					}
+					else self.ArrToShow(self.Stor3Arr1().slice(0));	
+					$('.component').show();	
+					break;
+				default:
+					break;	
+		}
+	}
+     self.showComponentSyst = function(sender, args){		
+		 switch(sender.Systpart()){
+				case '755258-B21--v3.02':   
+                     if(self.ArrToShow().length != 0){
+                         self.ArrToShow().splice (0,self.ArrToShow().length);					 
+						self.ArrToShow(self.SystArr1().slice(0));	
+					}
+					else self.ArrToShow(self.SystArr1().slice(0));	
+					$('.component').show();	
+					break;
+				case '767032-B21--v3.02':	
+				    if(self.ArrToShow().length != 0){	
+						self.ArrToShow().splice (0,self.ArrToShow().length);	
+						self.ArrToShow(self.SystArr2().slice(0));	
+					}
+					else self.ArrToShow(self.SystArr2().slice(0));	
+					$('.component').show();	
+					break;	
+				case 'PDB-767032-B21--v3.02':	
+					 if(self.ArrToShow().length != 0){
+						self.ArrToShow().splice (0,self.ArrToShow().length);
+						self.ArrToShow(self.SystArr3().slice(0));	
+					}
+					else self.ArrToShow(self.SystArr3().slice(0));	
+					$('.component').show();	
+					break;		
+				default:
+					break;	
+		}
+	}		
+		  self._loadList();
+  }
+  
+ function  requestEntry(group, infraspart, infraspartDescription, infrasuse,  infrascost, id, etag){
+	//  alert('in inf  ' + infraspart + '\n '+ infraspartDescription+ '\n' + infrasuse+ '\n' + infrascost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	 self.infraspart                    = ko.observable(infraspart);  
+	 self.infraspartDescription         = ko.observable(infraspartDescription);
+	 self.infrasuse                     = ko.observable(infrasuse);
+     self.infrascost		             = ko.observable(infrascost);
+     self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryS3(group, Stor3part, Stor3partDescription, Stor3use,  Stor3cost, id, etag){
+	//  alert('in s3  ' + Stor3part + '\n '+ Stor3partDescription+ '\n' + Stor3use+ '\n' + Stor3cost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	 self.Stor3part                    = ko.observable(Stor3part);  
+	 self.Stor3partDescription         = ko.observable(Stor3partDescription);
+	 self.Stor3use                     = ko.observable(Stor3use);
+     self.Stor3cost		             = ko.observable(Stor3cost);
+     self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryS(group, Storpart, StorpartDescription, Storuse,  Storcost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	 self.Storpart                    = ko.observable(Storpart);  
+	 self.StorpartDescription         = ko.observable(StorpartDescription);
+	 self.Storuse                     = ko.observable(Storuse);
+     self.Storcost		             = ko.observable(Storcost);
+     self.group = group; 	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryN(group, netpart, netpartDescription, netuse,  netcost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	 self.netpart                    = ko.observable(netpart);  
+	 self.netpartDescription         = ko.observable(netpartDescription);
+	 self.netuse                     = ko.observable(netuse);
+     self.netcost		             = ko.observable(netcost);
+     self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryNB(group, Nbladepart, NbladepartDescription, Nbladeuse,  Nbladecost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this; 
+	 
+	 self.Nbladepart                    = ko.observable(Nbladepart);  
+	 self.NbladepartDescription         = ko.observable(NbladepartDescription);
+	 self.Nbladeuse                     = ko.observable(Nbladeuse);
+     self.Nbladecost		             = ko.observable(Nbladecost);
+     self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryNS(group, NSystpart, NSystpartDescription, NSystuse,  NSystcost, id, etag){
+	//  alert('in s  ' + NSystpart+ '\n '+ NSystpartDescription+ '\n' + NSystuse+ '\n' + NSystcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	  self.NSystpart                    = ko.observable(NSystpart);  
+	 self.NSystpartDescription         = ko.observable(NSystpartDescription);
+	 self.NSystuse                     = ko.observable(NSystuse);
+     self.NSystcost		             = ko.observable(NSystcost);
+      self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntryb(group, bladepart, bladepartDescription, bladeuse,  bladecost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	  self.bladepart                    = ko.observable(bladepart);  
+	 self.bladepartDescription         = ko.observable(bladepartDescription);
+	 self.bladeuse                     = ko.observable(bladeuse);
+     self.bladecost		             = ko.observable(bladecost);
+     self.group = group; 	 
+     self.id  = id;
+	 self.etag = etag;	
+	    
+}
+function  requestEntrySys(group, Systpart,SystpartDescription, Systuse,  Systcost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	  self.Systpart                    = ko.observable(Systpart);  
+	 self.SystpartDescription         = ko.observable(SystpartDescription);
+	 self.Systuse                     = ko.observable(Systuse);
+     self.Systcost		             = ko.observable(Systcost);
+     self.group = group; 	 
+     self.id  = id;
+	 self.etag = etag;		 
+}
+function  requestEntryhdsb(group, hdsbpart,hdsbpartDescription, hdsbuse,  hdsbcost, id, etag){
+	//  alert('in s  ' + Storpart + '\n '+ StorpartDescription+ '\n' + Storuse+ '\n' + Storcost + '\n ' + id + '---' + etag);
+	 var self  = this;  
+	
+	 self.hdsbpart                    = ko.observable(hdsbpart);  
+	 self.hdsbpartDescription         = ko.observable(hdsbpartDescription);
+	 self.hdsbuse                     = ko.observable(hdsbuse);
+     self.hdsbcost		             = ko.observable(hdsbcost);
+     self.group = group;	 
+     self.id  = id;
+	 self.etag = etag;	
+  
+}
+//Get the catalog List
+  getRequests  = function(callback){ 
+							var restUrl =  "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/_api/web/lists/GetByTitle('HPESWCatalog')/items?$top=5000"	          	
+				            + "&$select=*,Visible,Group,Part_x0020__x0023_,Part_x0020_Description,RecommendedFor";
+                        								 
+						//Query the request list to display
+							$.ajax({
+								url:   restUrl,
+								type: "GET",
+								headers: {
+									"accept": 'application/json;odata=verbose',
+								},
+								success: function(data){ 
+									callback(data.d.results); 
+								},
+								error: function(){
+										alert('Unable to load the  catalog.');
+								}
+							});
+	}; 
+
+
+</script>
+
+</head>
+<body>      
+<div  id="theContainer"> 
+
+    <table class="clickable" border="1"  cellspacing="0" cellpadding="10" >
+	   <caption  style="font-size:2.5em;">HPE Software Equipment Catalog</caption>
+	    <thead style='background-color:gray; color:white'>
+		   <tr>
+		       <td>Part #</td>
+			   <td>Part Description </td>
+			    <td> Use </td>
+				<td> Cost(USD) </td>				
+		   </tr>
+		</thead>
+		  <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange; font-size:1.5em;">Hosted Digital Safe Builds</td><td colspan="1"></td></tr>
+		   <tbody data-bind="foreach: hdsblistparts"  class="hdsblistitem">
+		    <tr  data-bind="click: $root.showComponentHostedDS">
+			     <td class="pd" data-bind="text: hdsbpart"></td>
+				 <td class="pdd" data-bind="text: hdsbpartDescription"></td>
+				 <td class="ud"  data-bind="text: hdsbuse"></td>
+				 <td class="cd"  data-bind="text: hdsbcost"></td>				
+			</tr>
+		  </tbody>
+			 <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">Infrastructure</td><td colspan="1"></td></tr>
+	 <tbody data-bind="foreach: infraslistparts"  class="infraslistitem">
+		    <tr data-bind="click: $root.showComponentInfras">
+			     <td class="pd" data-bind="text: infraspart"></td>
+				 <td class="pdd" data-bind="text: infraspartDescription"></td>
+				 <td class="ud"  data-bind="text: infrasuse"></td>
+				 <td class="cd"  data-bind="text: infrascost"></td>				 
+			</tr>
+		</tbody>
+		   <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">Networking</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: netlistparts"  class="netlistitem">
+		    <tr data-bind="click: $root.showComponentNet">
+			     <td class="pd" data-bind="text: netpart"></td>
+				 <td class="pdd" data-bind="text: netpartDescription"></td>
+				 <td class="ud"  data-bind="text: netuse"></td>
+				 <td class="cd"  data-bind="text: netcost"></td>				 
+			</tr>
+		</tbody>
+		  <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange; font-size:1.5em;">Non-x86/x64 Blades</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: Nbladelistparts"  class="Nbladelistitem">
+		    <tr data-bind="click: $root.showComponentNblade">
+			     <td class="pd" data-bind="text: Nbladepart"></td>
+				 <td class="pdd" data-bind="text: NbladepartDescription"></td>
+				 <td class="ud"  data-bind="text: Nbladeuse"></td>
+				 <td class="cd"  data-bind="text: Nbladecost"></td>				
+			</tr>
+		</tbody>
+		  <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">Non-x86/x64 Systems</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: NSystlistparts"  class="NSystlistitem">
+		    <tr  data-bind="click: $root.showComponentNSyst">
+			     <td class="pd" data-bind="text: NSystpart"></td>
+				 <td class="pdd" data-bind="text: NSystpartDescription"></td>
+				 <td class="ud"  data-bind="text: NSystuse"></td>
+				 <td class="cd"  data-bind="text: NSystcost"></td>				 
+			</tr>
+		</tbody>
+		 <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">Storage</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: Storlistparts"  class="Storlistitem">
+		    <tr data-bind="click: $root.showComponentStor">
+			     <td class="pd" data-bind="text: Storpart"></td>
+				 <td class="pdd" data-bind="text: StorpartDescription"></td>
+				 <td class="ud"  data-bind="text: Storuse"></td>
+				 <td class="cd"  data-bind="text: Storcost"></td>				
+			</tr>
+		</tbody>
+		 <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">Storage - 3PAR</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: Stor3listparts"  class="Stor3listitem">
+		    <tr data-bind="click: $root.showComponentStor3">
+			     <td class="pd" data-bind="text: Stor3part"></td>
+				 <td class="pdd" data-bind="text: Stor3partDescription"></td>
+				 <td class="ud"  data-bind="text: Stor3use"></td>
+				 <td class="cd"  data-bind="text: Stor3cost"></td>				 
+			</tr>
+		</tbody>
+		 <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange; font-size:1.5em;">x86/x64 Blades</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: bladelistparts"  class="bladelistitem">
+		    <tr data-bind="click: $root.showComponentblade">
+			     <td class="pd" data-bind="text: bladepart"></td>
+				 <td class="pdd" data-bind="text: bladepartDescription"></td>
+				 <td class="ud"  data-bind="text: bladeuse"></td>
+				 <td class="cd"  data-bind="text: bladecost"></td>				                                                                                                                                                                                                                           
+			</tr>
+		</tbody>
+		 <tr><td></td><td colspan="2" style="align:center; color: red; background-color:orange;font-size:1.5em;">x86/x64 Systems</td><td colspan="1"></td></tr>
+		  <tbody data-bind="foreach: Systlistparts"  class="Systlistitem">
+		    <tr data-bind="click: $root.showComponentSyst">
+			     <td class="pd" data-bind="text: Systpart"></td>
+				 <td class="pdd" data-bind="text: SystpartDescription"></td>
+				 <td class="ud"  data-bind="text: Systuse"></td>
+				 <td class="cd"  data-bind="text: Systcost"></td>				
+			</tr>
+		</tbody>
+	</table>
+</div>
+</body>
+</html>
+
