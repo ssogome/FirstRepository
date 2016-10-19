@@ -1,0 +1,99 @@
+/************Action commands in Visual Basic can only carry out actions. This includes queries, or SQL statements that represent queries. The reason you are getting the error is probably
+because the SQL statement you are dealing with does not constitute an action.Action queries are: UPDATE, DELETE, APPEND, and MAKE TABLE. These are the only ones that can be used in Visual
+ Basic with the Docmd.RunSQL and CurrentDB.Execute commands.********/
+Public Function AppendNewEmployeeInfo()
+    Dim SQLText As String
+    Dim AppendText As String
+    Dim tmpArray(10000, 1) As Variant
+    Dim MyArray(10000, 1) As Variant
+    
+    
+    On Error GoTo ErrorHandler
+    
+   Dim LCounter As Variant
+   Dim LCounter2 As Variant
+   
+    Dim db As DAO.Database
+    Dim rs1 As DAO.Recordset
+    Dim rs2 As DAO.Recordset
+    Dim rs3 As DAO.Recordset
+    
+    Dim queryNameOrSQL As String
+    Dim queryNameOrSQL2 As String
+    
+    queryNameOrSQL = "Sheet1"
+    queryNameOrSQL2 = "EmployeeInfo"
+    
+   
+    Set db = CurrentDb()
+    Set rs1 = db.OpenRecordset(queryNameOrSQL)
+    Set rs2 = db.OpenRecordset(queryNameOrSQL2)
+    
+    
+        rs1.MoveLast
+    rs1Count = rs1.RecordCount
+    rs2.MoveLast
+    rs2Count = rs2.RecordCount
+       
+      
+         If Not (rs1.EOF And rs1.BOF) Then
+            rs1.MoveFirst
+            LCounter = 0
+            Do Until rs1.EOF = True
+                 If (rs1!EmployeeID <> 0) Then
+                    tmpArray(LCounter, 0) = rs1!EmployeeID
+                 End If
+              rs1.MoveNext
+            Loop
+         End If
+     
+         If Not (rs2.EOF And rs2.BOF) Then
+            rs2.MoveFirst
+            LCounter2 = 0
+            Do Until rs2.EOF = True
+                MyArray(LCounter2, 0) = rs2!EmployeeID
+                rs2.MoveNext
+            Loop
+         End If
+         
+         For LCounter = 0 To rs1Count - 1
+           For LCounter2 = 0 To rs2Count - 1
+                   If (MyArray(LCounter2, 0) = tmpArray(LCounter, 0)) Then
+                        tmpArray(LCounter, 0) = 0
+                   End If
+           Next LCounter2
+         Next LCounter
+
+        
+        
+       For LCounter = 0 To rs1Count - 1
+           If (tmpArray(LCounter, 0) <> 0) Then
+           
+              SQLText = "SELECT Title, EmployeeID, EmployeeName, JobTitle FROM Sheet1 WHERE EmployeeID = " & tmpArray(LCounter, 0)
+                    Set rs3 = db.OpenRecordset(SQLText)
+                    rs3.MoveLast
+                    rs3Count = rs3.RecordCount
+                   
+                    With rs3
+                    If Not (rs3.EOF And rs3.BOF) Then
+                                 rs3.MoveFirst
+                        Do Until rs3.EOF = True
+                                AppendText = "INSERT INTO EmployeeInfo(Title, EmployeeID, EmployeeName, JobTitle) VALUES " _
+                                            & "(  '" & rs3!Title & "', '" & rs3!EmployeeID & "', '" & rs3!EmployeeName & "', '" & rs3!JobTitle & "' );"
+                                db.Execute AppendText
+                             rs3.MoveNext
+                        Loop
+                    End If
+                    End With
+                    rs3.Close
+                    Set rs3 = Nothing
+           End If
+      Next LCounter
+      
+        Erase tmpArray, MyArray
+        
+ErrorHandler:
+   MsgBox "During Append, " & Chr(13) & "Error #: " & Err.Number & vbCrLf & vbCrLf & Err.Description
+End Function
+
+
