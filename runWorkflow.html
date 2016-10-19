@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<head>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/HPESS-Equipment/Script%20Library/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/HPESS-Equipment/Script%20Library/jquery-ui.min.js"></script>
+<script  type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/HPESS-Equipment/Script%20Library/jquery.SPServices-2014.02.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/HPESS-Equipment/Script%20Library/knockout-3.3.0.js"></script>
+
+
+
+<script  type="text/javascript">
+	var wkfName = "";
+			var prmeters = [];
+			var aftr = "";
+			var itemID = "";
+			var theIdArr = []; 
+			var gbuArr = [];
+			var buArr = [];
+			var subbuArr = [];
+			var itemArr = [];
+			var xrequestArr = [];
+			var tieoffArr = [];
+			var currentList = [];
+			var itemCopiedArr = [];
+			var ElArr = [];
+			var JusArr = [];
+			var PostArr = [];
+			var PreArr = [];
+			var subArr = [];
+			var accCommArr = [];
+			var bpoReqArr = [];
+			var itprArr = [];
+			var breakArr = [];
+			var engCommArr = [];
+			var impArr = [];
+			var countryArr = [];
+			var stateArr = [];
+			var valArr = [];
+			var swanArr = [];
+			var watArr = [];
+			var destEnvArr = [];
+			var regionArr = [];
+			var statArr = [];
+			var qtrMoveArr = [];
+			var theArr = [];
+			var streetArr = [];
+			var personArr = [];
+			var cityArr = [];
+			var etagArr = [];
+			var fundTypeArr = [];
+			var qterArr  =[];
+			var bu_BSMArr = [];
+			var catArr = [];
+			var createdArr = [];
+			var noteArr  = [];
+			var commentArr = [];
+			var purchaseTypeArr = [];
+			var country = "";
+ $(document).ready(function(){	
+			SP.SOD.executeFunc('sp.js', 'SP.ClientContext', getCurrentList);        
+					
+			runWorkflow =function(){						   
+				  SP.SOD.executeFunc('sp.js', 'SP.ClientContext', startWkflow({
+																				listName:"TempList",
+																				workflowName:"copy",																			
+																				after: function(){ SP.UI.Notify.addNotification("Workflow process started on selected item.", false);}}));
+			}
+			updateItems = function(){
+			       doUpdate();
+			}
+			emptyItems = function(){
+					findMissing();
+				//SP.SOD.executeFunc('sp.js', 'SP.ClientContext', doDelete({
+					//													listName:"Equipment Request List",
+						//												workflowName:"empty",																			
+							//											after: function(){ SP.UI.Notify.addNotification("Empty Workflow process started on selected item.", false);}}));
+			}
+			
+ });
+function getCurrentList(){
+	 var  clientContext = SP.ClientContext.get_current();
+	 var  list = clientContext.get_web().get_lists().getByTitle("Equipment Request");
+		 
+			  var query = new SP.CamlQuery();
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID'  />"
+									+ "  </OrderBy>"
+									+ "<Where>"	
+									+ " <And>"	
+									+ "  <Geq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Integer'> 0</Value>"
+									+ "  </Geq>"
+									+ "  <Leq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Integer'> 5000</Value>"
+									+ "  </Leq>"
+									+ "  </And>"	
+									+ " </Where>"	
+									+ "</Query>"
+									+ "<ViewFields>"
+									+ "   <FieldRef Name='Title' />"
+									+ "   <FieldRef Name='ID' />"
+									+ "   <FieldRef Name='AdjustedID' />" 	
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this._pendingItems = list.getItems(query);
+				clientContext.load(this._pendingItems);		
+				       
+				 this.workflows = list.get_workflowAssociations();  // This will only call SP2010 workflow NOT SP 2013's
+				 clientContext.load(this.workflows);
+				 
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.onGetSucceeded), Function.createDelegate(this, this.onGetFailed))	
+}     
+function onGetSucceeded(){ 		  
+		   var listEnumerator = this._pendingItems.getEnumerator();
+		   			   	var theId = "";		   
+			        while(listEnumerator.moveNext()){
+							var item = listEnumerator.get_current().get_fieldValues();	
+								for(var j=20; j< 26; j++){															
+									if($.isNumeric(item.Title.substring(j,j+1)))theId +=item.Title.substring(j,j+1);
+									if(item.Title.substring(j,j+1) == '/')break;
+								}	
+									currentList.push({
+									    Adjid:   item.AdjustedID,
+										Extid : theId,  });											
+					}
+ alert('The list is ready  with ' +  currentList.length + ' items' ); 					
+	}
+	function onGetFailed(sender, args){
+		   alert("Error with loading the request list. "+ args.get_message());
+	} 
+	
+/*****************************************************************************************************************************/	
+startWkflow = function(params){ alert('copying ....');
+		 var  clientContext = SP.ClientContext.get_current();
+		//We need to make sure that SP.ClientContext is loaded
+	    if(SP.ClientContext == undefined){
+		    setTimeout(function(){startWorkflow(params)}, 100);
+			return;
+	    }
+		
+		params.after = params.after || (function(){});
+		if(!params.workflowName){alert("Please provide the workflow name!"); return; }
+		wkfName = params.workflowName;
+		prmeters = params.parameters;
+		aftr = params.after; 
+		
+		  
+		 var  list = clientContext.get_web().get_lists().getByTitle(params.listName);
+		 
+			  var query = new SP.CamlQuery();
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID' />"
+									+ "  </OrderBy>"
+									+ "<Where>"	
+									+ " <And>"	
+									+ "  <Geq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Number'> 0</Value>"
+									+ "  </Geq>"
+									+ "  <Leq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Number'> 500 </Value>"
+									+ "  </Leq>"
+									+ "  </And>"	
+									+ " </Where>"		
+									+ "</Query>"
+									+ "<ViewFields>"
+									+ "   <FieldRef Name='Title1' />"
+									+ "   <FieldRef Name='_x0049_D1' />"
+									+ "   <FieldRef Name='ID' />"									
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this._pendingItems = list.getItems(query);
+				clientContext.load(this._pendingItems);		
+				       
+				 this.workflows = list.get_workflowAssociations();  // This will only call SP2010 workflow NOT SP 2013's
+				 clientContext.load(this.workflows);
+				 
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.onQuerySucceeded), Function.createDelegate(this, this.onQueryFailed));
+	}
+	function onQuerySucceeded(params){  
+	       var theId = "";
+		   var count = 0;
+		   var enumerator = this.workflows.getEnumerator(); 
+		   var listEnumerator = this._pendingItems.getEnumerator();
+		   
+		   while(enumerator.moveNext()){
+			   var workflow = enumerator.get_current();		   
+			   if(workflow.get_name() == wkfName){
+			        while(listEnumerator.moveNext()){  
+							var item = listEnumerator.get_current().get_fieldValues();	
+							
+							for(var j=20; j< 26; j++){															
+									if($.isNumeric(item.Title1.substring(j,j+1)))theId +=item.Title1.substring(j,j+1);
+									if(item.Title1.substring(j,j+1) == '/')break;
+							}	
+								
+							     itemArr.push(
+									      { itemId: item.ID,
+										    item2010Id: theId,
+										  });
+							 theId = "";
+											
+					}
+									
+						for(var l=0; l< itemArr.length; l++){  
+						       $sp.wf.start2010Workflow({
+																	name: "copy",
+																	list: "TempList",
+																	id: itemArr[l].itemId,																
+																});
+										
+										count +=1;	
+						}
+					}
+			   }			  
+			   
+	}
+	function onQueryFailed(sender, args){
+		   alert("Error with Start workflow. "+ args.get_message());
+	} 
+	
+/********************************************************************************************************************************************/	
+
+window.$sp = window.$sp || {};
+window.$sp.wf = (function( $, undefined ) {
+    "use strict";
+    var ctx,
+        web,
+        wfManager,
+        JS_SUFFIX = ".js",
+        SP_WORKFLOW_SERVICES = "SP.WorkflowServices",
+        SP_WORKFLOW_SERVICES_SCRIPT_NAME = SP_WORKFLOW_SERVICES + JS_SUFFIX,
+        risGuid = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i,
+        oDataHeader = "application/json;odata=verbose",
+        initializeVariables = function() {
+            ctx = SP.ClientContext.get_current();
+            web = ctx.get_web();
+            wfManager = SP.WorkflowServices.WorkflowServicesManager.newObject( ctx, web ); // the gateway to all services included in the Workflow Services CSOM API
+        },
+        registerWFscripts = function() {
+            SP.SOD.registerSod(
+                SP_WORKFLOW_SERVICES_SCRIPT_NAME,
+                SP.Utilities.Utility.getLayoutsPageUrl( SP_WORKFLOW_SERVICES + JS_SUFFIX ) //returns the URL to the page in the _layout folder relative to the root of the website
+            );//register the  specified file at the specified URL
+            SP.SOD.executeFunc(
+                SP_WORKFLOW_SERVICES_SCRIPT_NAME,
+                SP_WORKFLOW_SERVICES + ".WorkflowServicesManager",
+                initializeVariables
+            );
+        },
+        init = function() {
+            SP.SOD.executeFunc(
+                "sp" + JS_SUFFIX,
+                "SP.ClientContext",
+                registerWFscripts
+            );
+        },
+        set_errorHandler = function( func ) {
+            errorHandler = func;
+        },
+        errorHandler = function( sender, args ) {
+            var message = this,
+                spError = args && args.get_message,
+                restAPIError = sender && sender.responseText;
+
+            if( this.id ) {
+                message += " on item with ID: " + this.id;
+            }
+
+            SP.UI.Notify.addNotification( message, false );
+            console.log( message );
+
+            if( spError ) {
+                console.log( "Error:", args.get_message(), "\nStackTrace:", args.get_stackTrace() );
+            }
+
+            if( restAPIError ) {
+                console.log( restAPIError );
+            }
+        },
+        set_successHandler = function( func ) {
+            successHandler = func;
+        },
+        successHandler = function( sender, args ) {
+            var wfName = this.name || this.subscription && this.subscription.get_name(),
+                message = "Workflow " + wfName + " has started.";
+
+            if( this.id ) {
+                message = message.replace(".", "");
+                message += " on this item. ID: " + this.id;								
+            }
+			
+            SP.UI.Notify.addNotification( message, false );			
+        },
+        fireWfByName = function( sender, args ) {
+            var subscription = this.subscription,
+                id = this.id,
+                initiationParams = this.initiationParams || {},
+                workflows = subscription.getEnumerator(),
+                workflow,
+                foundWrkFlow = false;
+
+            while( workflows.moveNext() ) {
+                workflow = workflows.get_current();
+
+                if( workflow.get_name() === this.name ) {
+                    startWorkflow({
+                        subscriptionId: workflow.get_id(),
+                        id: id,
+                        initiationParams: initiationParams
+                    });
+
+                    foundWrkFlow = true;
+                    break;
+                }
+            }
+            if( !foundWrkFlow ) {
+                errorHandler.call( "Could not find workflow named: " + this.name );
+            }
+        },
+        fireWfBySubscription = function( sender, args ) {  
+            var subscription = this.subscription,
+                id = this.id,
+                initiationParams = this.initiationParams || {},
+                wfInstance = wfManager.getWorkflowInstanceService();
+
+            // https://msdn.microsoft.com/en-us/library/office/microsoft.sharepoint.client.workflowservices.workflowinstanceservice_methods.aspx
+
+            if( id ) {
+                wfInstance.startWorkflowOnListItem( subscription, id, initiationParams );
+            } else {
+                wfInstance.startWorkflow( subscription, initiationParams );
+            }
+
+            ctx.executeQueryAsync(
+                successHandler.bind( this ),
+                errorHandler.bind( "Could not fire workflow. SubscriptionId: " + this.subscriptionId )
+            );
+        },
+        startWorkflow = function( opt ) {  
+            var subscriptionService = wfManager.getWorkflowSubscriptionService(), //retrieves the wfSubscriptionService instance that manages workflow associations
+                success,
+                error;
+			
+            // different methods to fire workflows with 2013.
+            // https://msdn.microsoft.com/en-us/library/microsoft.sharepoint.workflowservices.workflowsubscriptionservice_members.aspx
+            if( opt.subscriptionId ) {
+                opt.subscription = subscriptionService.getSubscription( opt.subscriptionId );  //retrieves an instance of the wfSubscription based on its Id
+                ctx.load( opt.subscription );  
+                success = fireWfBySubscription.bind( opt );
+                error = errorHandler.bind( "Failed to load subscription: " + opt.subscriptionId );
+            } else {
+                opt.subscription = subscriptionService.enumerateSubscriptions();	//retrieves a wfSubscriptionCollection instance that contains all of the wf subscriptions on a given site collection(SPWeb)
+                ctx.load( opt.subscription );
+                success = fireWfByName.bind( opt );
+                error = errorHandler.bind( "Failed to load workflow subscriptions." );
+            }
+
+            ctx.executeQueryAsync(
+                success,
+                error
+            );
+        },
+        removeDemCurlies = function( v ) {
+            return v.replace( /{|}/g, "" );
+        },
+        getListItemDeets = function( listUrl ) {
+            return $.ajax({
+                type: "GET",
+                url: listUrl,
+                dataType: "json",
+                headers: {
+                    "Accept": oDataHeader,
+                    "Content-Type": oDataHeader
+                }
+            });
+        },
+        fire2010Workflow = function( data ) { 
+            var success,
+                listGuid = data.d.__metadata.uri.match( risGuid )[ 0 ],
+                itemId = data.d.GUID;
+
+            this.result = this.subscriptionService.startWorkflow( this.name, null, listGuid, itemId, this.initiationParams );
+            success = successHandler.bind( this );
+
+            ctx.executeQueryAsync(
+                success,
+                this.error
+            );
+        },
+        start2010Workflow = function( opt ){ 
+            var subscriptionService = wfManager.getWorkflowInteropService(),
+                wfName = opt.name,
+                id = opt.id,
+                itemGuid,
+                initiationParams = opt.initiationParams,
+                queryPrefix = "/_api/web/lists",
+                querySuffix = "/items(" + id + ")?$select=GUID",
+                // May need to do this later when ctx is dynamic.
+                // listUrl = web.get_url(),
+                listUrl = _spPageContextInfo.webAbsoluteUrl + queryPrefix,
+                listGuid,
+                errorMessage = "Failed to fire 2010 {0} Workflow   on item ID = "+ opt.id,
+                success,
+                error;
+
+            // Fire 2010 workflows!
+            // https://msdn.microsoft.com/en-us/library/office/microsoft.sharepoint.client.workflowservices.interopservice.startworkflow.aspx
+
+            // Not sure if opt.result is going to be helpful, but leaving it here for the meantime.
+            // If it is useful, then I'll bind it to the both handlers.
+            // If not, I'll drop it altogether.
+            if( id ) { 
+                listGuid = opt.list.match( risGuid );
+                if( listGuid ) { 
+                    listGuid = removeDemCurlies( listGuid[0] );
+                    listUrl += "(guid'" + listGuid + "')";
+                } else {  
+                    listUrl += "/GetByTitle('" + opt.list + "')";
+                }
+
+                listUrl += querySuffix;
+
+                // converts numbers to strings.
+                id = id + "";
+                itemGuid = id.match( risGuid );
+
+                if( listGuid && itemGuid ) {
+                    // List GUID and item GUID were provided, no need for API call.
+                    opt.result = subscriptionService.startWorkflow(wfName, null, listGuid, itemGuid[0], initiationParams);
+                    success = successHandler.bind( opt );
+                    error = errorHandler.bind( errorMessage.replace("{0}", "Site"));
+                } else {  
+                    // Need to resolve List GUID and get the item GUID.
+                    opt.subscriptionService = subscriptionService;
+                    opt.error = errorHandler.bind( errorMessage.replace("{0}", "List") );
+
+                    return getListItemDeets.bind( opt )( listUrl )
+                        .then( fire2010Workflow.bind( opt ), opt.error );
+                }
+            } else {  
+                // Site WF
+                opt.result = subscriptionService.startWorkflow( wfName, null, null, null, initiationParams );
+                success = successHandler.bind( opt );
+                error = errorHandler.bind( errorMessage.replace("{0}", "Site") );
+            }
+
+            ctx.executeQueryAsync(
+                success,
+                error
+            );
+        }
+    init();
+
+    return {
+        set_errorHandler: set_errorHandler,
+        set_successHandler: set_successHandler,
+        startWorkflow: startWorkflow,
+        start2010Workflow: start2010Workflow
+    };
+}( window.jQuery ));
+
+/****************************************************************************************************************************************/
+function doUpdate(){ alert('updating....');
+		/*	var scriptbase = "https://hpenterprise.sharepoint.com/teams/HPESS-Equipment/_layouts/15/";  
+			$.getScript(scriptbase + "SP.Runtime.js", function(){
+			 $.getScript(scriptbase + "SP.UserProfiles.js", function(){});
+			});  */
+			SP.SOD.executeFunc('SP.js', 'SP.ClientContext', OnLoadedScripts());
+}
+//This function is invoked only after successful load of SP.js scripts  
+     function OnLoadedScripts(){ 
+		var  clientContext = SP.ClientContext.get_current();
+		var list = clientContext.get_web().get_lists().getByTitle('TempList');
+		var query = new SP.CamlQuery();
+	
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID' />"
+									+ "  </OrderBy>"
+									+ "<Where>"	
+									+ " <And>"	
+									+ "  <Geq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Integer'> 0</Value>"
+									+ "  </Geq>"
+									+ "  <Leq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Integer'> 500 </Value>"
+									+ "  </Leq>"
+									+ "  </And>"	
+									+ " </Where>"	 	
+									+ "</Query>"
+									+ "<ViewFields>"								
+									+ "   <FieldRef Name='Title1' />"
+									+ "   <FieldRef Name='Created2' />"
+									+ "   <FieldRef Name='_x0049_D1' />"
+									+ "   <FieldRef Name='ID' />"
+									+ "   <FieldRef Name='Business_x0020_Unit' />"										
+									+ "   <FieldRef Name='SubGroup' />"
+									+ "   <FieldRef Name='Request_x0020_Status' />"
+									+ "   <FieldRef Name='GBU' />"	
+									+ "   <FieldRef Name='Program_x0020__x0020_Proj' />"
+									+ "   <FieldRef Name='Funding_x0020_Type' />"
+									+ "   <FieldRef Name='Projected_x0020_Cost' />"
+									+ "   <FieldRef Name='Ship_x002d_to_x002d_Country' />"
+									+ "   <FieldRef Name='Requested_x0020_Quarter' />"
+									+ "   <FieldRef Name='Submitter' />"
+									+ "   <FieldRef Name='Tie_x002d_Off' />"									
+									+ "   <FieldRef Name='BPO_x0020_Request_x0020_Type' />"
+									+ "   <FieldRef Name='EL_x0020_BPO_x0020_Term' />"
+									+ "   <FieldRef Name='Justification_x0020_Class' />"
+									+ "   <FieldRef Name='Post_x002d_Submission_x0020_Prob' />"
+									+ "   <FieldRef Name='Pre_x002d_Submission_x0020_Probl' />"
+									+ "   <FieldRef Name='BreakFix_x002d_Spares' />"
+									+ "   <FieldRef Name='Accept_x0020_Comment' />"
+									+ "   <FieldRef Name='ExpressRequest' />"
+									+ "   <FieldRef Name='Impact_x0020_Category' />"
+									+ "   <FieldRef Name='Eng_Arch_x0020_Review_x0020_Comm' />"
+									+ "   <FieldRef Name='Ship_x002d_to_x002d_Country' />"
+									+ "   <FieldRef Name='Ship_x002d_to_x002d_State' />"
+									+ "   <FieldRef Name='Title' />"
+									+ "    <FieldRef Name='Notes' />"
+									+ "   <FieldRef Name='Validation_x0020_Review' />"
+									+ "   <FieldRef Name='SWAN_x0020__x002f__x0020_SAP' />"
+									+ "   <FieldRef Name='Qtr_x0020_Move' />"
+									+ "   <FieldRef Name='bu_BSMThisQtr' />" 
+									+ "   <FieldRef Name='Watson_x0020_Quote' />"
+									+ "   <FieldRef Name='Destination_x0020_Environment' />"
+									+ "   <FieldRef Name='Region'  />"
+									+ "   <FieldRef Name='Purchase_x0020_Type' />"
+									+ "   <FieldRef Name='ITPR_x0020_Status' />"
+									+ "   <FieldRef Name='Review_x0020_Comments' />" 
+									+ "   <FieldRef Name='HP_x0020_Separation' />"
+									+ "   <FieldRef Name='Request_x0020_Type' />"
+									+ "   <FieldRef Name='EntryReview_x0020_Feedback' />"
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this._pendingItems = list.getItems(query);
+				clientContext.load(this._pendingItems);						       				 
+				  
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.QuerySucceeded), Function.createDelegate(this, this.QueryFailed));		
+	 }
+	function QuerySucceeded(){ alert('success in loading   .........  ');
+		    var listEnumerator = this._pendingItems.getEnumerator();		   		 
+			     	var theId = ""; 		
+			        while(listEnumerator.moveNext()){
+							theId = "";
+							var lstItem = listEnumerator.get_current();
+							var item = lstItem.get_fieldValues();													
+							
+							gbuArr.push(item.GBU);	
+							buArr.push(item.Business_x0020_Unit);
+							subbuArr.push(item.SubGroup);
+							xrequestArr.push(item.ExpressRequest);
+							tieoffArr.push(item.Tie_x002d_Off);
+							ElArr.push(item.EL_x0020_BPO_x0020_Term);	
+							JusArr.push(item.Justification_x0020_Class);
+							PostArr.push(item.Post_x002d_Submission_x0020_Prob);
+							PreArr.push(item.Pre_x002d_Submission_x0020_Probl);
+							accCommArr.push(item.Accept_x0020_Comment);
+							
+							bpoReqArr.push(item.BPO_x0020_Request_x0020_Type);
+							breakArr.push(item.BreakFix_x002d_Spares);
+							engCommArr.push(item.Eng_Arch_x0020_Review_x0020_Comm);
+							
+							valArr.push(item.Validation_x0020_Review);
+							swanArr.push(item.SWAN_x0020__x002f__x0020_SAP);
+							watArr.push(item.Watson_x0020_Quote);
+							destEnvArr.push(item.Destination_x0020_Environment);
+							regionArr.push(item.Region);
+							statArr.push(item.Title);
+							fundTypeArr.push(item.HP_x0020_Separation);
+							qterArr.push(item.Requested_x0020_Quarter);
+							catArr.push(item.Impact_x0020_Category);
+							createdArr.push({id: item._x0049_D1, create: item.Created2});
+							purchaseTypeArr.push(item.Purchase_x0020_Type);
+							qtrMoveArr.push(item.Qtr_x0020_Move);
+							bu_BSMArr.push(item.bu_BSMThisQtr);
+							noteArr.push(item.EntryReview_x0020_Feedback);
+							itprArr.push(item.ITPR_x0020_Status);
+						
+				    	 
+							for(var j=16; j< 26; j++){																
+									if($.isNumeric(item.Title1.substring(j,j+1)))theId +=item.Title1.substring(j,j+1);
+									if(item.Title1.substring(j,j+1) == '/')break;
+							}
+							theIdArr.push({
+							    id: theId,
+								title: item.Title1});		
+					}				
+								 getRequests(onGetSuccessed);
+	}
+	function QueryFailed(sender, args){
+		   alert("Error with Updating List item . " + '\n' + args.get_message());
+	} 
+ 
+/*********************************************************************************************************************************************************/	
+onGetSuccessed  =function(itemList){ alert('success in onGetSuccessed    '  + itemList.length   + '\n' + theIdArr.length); 	
+				var Id = ""; 
+				var count = 0;
+	
+		for(var i=0; i<itemList.length; i++){//  SP.UI.Notify.addNotification("Workflow process started on selected item."  + itemList[i].Id, false);
+								  Id = "";	
+							  
+			//if(itemList[i].Business_x0020_Unit == 'None'){	 
+			//		  for(var j=16; j< 26; j++){								
+			//						if($.isNumeric(itemList[i].Title.substring(j,j+1)))Id +=itemList[i].Title.substring(j,j+1);
+			//						if(itemList[i].Title.substring(j,j+1) == '/')break;
+			//		  }						
+			//	if($.isNumeric(Id)){ 		
+					for(var j= 0; j< theIdArr.length; j++){ 	
+							if(theIdArr[j].id == itemList[i].AdjustedID && itemList[i].AdjustedID == '11847'){	SP.UI.Notify.addNotification("Workflow process started on selected item."  + theIdArr[j].Id, false);
+							//	Update(Id, gbuArr[j], buArr[j], subbuArr[j], statArr[j], accCommArr[j], regionArr[j], bpoReqArr[j], breakArr[j], engCommArr[j], valArr[j], swanArr[j], watArr[j], destEnvArr[j], xrequestArr[j], tieoffArr[j], ElArr[j], JusArr[j], PostArr[j], PreArr[j], subArr[j], fundTypeArr[j], qterArr[j], catArr[j], purchaseTypeArr[j] , qtrMoveArr[j], bu_BSMArr[j], noteArr[j], itprArr[j], itemList[i].Id, itemList[i].__metadata.etag) ;	
+								count +=1;						
+							}
+					}					
+				}
+			//}	
+		//}
+	//	alert('Total number of updated items is ' +count );
+}
+
+/*****************************************************************************************************************************************************************/
+function Update(ItemId, gbu, bu, subbu, stat,  accComm, region, bpoReq, brk, engComm, val, swan, wat, destEnv, xrequest, tieoff, el, just, post, pre, sub, fundTyp, qter, catego, purchseType, qtrMove, bu_BSM, notes, itpr, id, etag){ 
+		//alert(ItemId + '\n'+ gbu +'\n' + bu + '\n'+ subbu + '\n'+ stat +  '\n' + xrequest + '\n' + tieoff + '\n' + el + '\n' + just + '\n' + post +'\n' + pre + '\n' + accComm + '\n'  +region +  '\n' + bpoReq + '\n' + brk + '\n' + engComm +  '\n' + '\n' + val + '\n' + swan + '\n' + wat + '\n' + destEnv + '\n'+ fundTyp + '\n'+ purchseType+ '\n'+ '\n  bsm = '+ bu_BSM+ '\n' + qtrMove +  '\n'+ notes + '\n etag = ' + etag + '\n id = ' + id);								
+					var body ={  
+						'__metadata':{'type': 'SP.Data.Equipment_x0020_RequestListItem'},						
+						"purchase_x0020_Type": purchseType,
+					}
+	 body = JSON.stringify(body);  
+	
+	 $.ajax({
+		url: "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/_api/web/lists/GetByTitle('Equipment Request')/items/getbyid('" + id.toString() +"')",
+		type: "POST",
+		data: body,
+		headers:{
+			 "X-Http-Method": "PATCH",
+			 "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+			 "IF-MATCH": etag,
+			  "accept" : "application/json;odata=verbose",
+			 "content-type": "application/json;odata=verbose",
+			 "content-length": body.length
+		},
+	  success: function(data){SP.UI.Notify.addNotification("Completed update process started on selected item.  Id =  " + id , false);},
+	  error: function(err){alert('error. Could not update the request.');}	
+	 });
+ }
+ /***********************************************************************************************************************************************************************************/
+ //Get the Request List for update
+  getRequests  = function(callback){  
+							var restUrl =  "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/_api/web/lists/GetByTitle('Equipment Request')/items"
+	                + "?$orderby=Created desc&$top=5000"			
+				  + "&$select=*";
+                        								 
+						//Query the request list to display
+							$.ajax({
+								url:   restUrl,
+								type: "GET",
+								headers: {
+									"accept": 'application/json;odata=verbose',
+								},
+								success: function(data){ 
+									callback(data.d.results); 
+								},
+								error: function(){
+										alert('Unable to load the  requests.');
+								}
+							});
+	}
+	
+/***********************************************************************************************************************************************************************************/	
+doDelete = function(params){ alert('start deleting ....');
+		 var  clientContext = SP.ClientContext.get_current();
+		
+		//We need to make sure that SP.ClientContext is loaded
+	    if(SP.ClientContext == undefined){
+		    setTimeout(function(){startWorkflow(params)}, 100);
+			return;
+	    }
+		
+		params.after = params.after || (function(){});
+		if(!params.workflowName){alert("Please provide the workflow name!"); return; }
+		wkfName = params.workflowName;
+		prmeters = params.parameters;
+		aftr = params.after; 
+		
+		 var  list = clientContext.get_web().get_lists().getByTitle(params.listName);
+		 
+			  var query = new SP.CamlQuery();
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID' />"
+									+ "  </OrderBy>"								
+									+ "</Query>"
+									+ "<ViewFields>"
+									+ "   <FieldRef Name='Title' />"
+									+ "   <FieldRef Name='ID' />"									
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this._pendingItems = list.getItems(query);
+				clientContext.load(this._pendingItems);		
+				       				
+				 
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.onEmptyQuerySucceeded), Function.createDelegate(this, this.onEmptyQueryFailed));
+	}
+	function onEmptyQuerySucceeded(){  alert('success  '); 
+		  
+		   var listEnumerator = this._pendingItems.getEnumerator();		 						   
+			
+			        while(listEnumerator.moveNext()){ 
+							var item = listEnumerator.get_current().get_fieldValues();				   								
+							
+									deleteWf({name: "empty",
+										list: "SecondMigrationTest",
+										id: item.ID,		});
+								
+					}
+	    			  		  		    
+	}
+	function onEmptyQueryFailed(sender, args){
+		   alert("Error with Start Empty workflow. "+ args.get_message());
+	} 
+deleteWf = function(params){  
+
+        var  ctx = SP.ClientContext.get_current();
+        var  web = ctx.get_web();
+		var sMgr =new SP.WorkflowServices.WorkflowServicesManager(ctx, web);
+		var sservice = sMgr.getWorkflowSubscriptionService();
+		var  listGuid = "675E9A89-FC02-4B86-9156-5ACEF389D508";
+		var ssubs = sservice.enumerateSubscriptionsByList(listGuid);
+				ctx.load(ssubs);
+		var  list = ctx.get_web().get_lists().getByTitle("SecondMigrationTest");
+		 		
+		var workflows = list.get_workflowAssociations();  // This will only call SP2010 workflow NOT SP 2013's
+				 ctx.load(workflows);		
+		ctx.executeQueryAsync(function(){
+										var e = ssubs.getEnumerator();
+										var enumerator = workflows.getEnumerator();
+										
+									while(e.moveNext()){
+										var c =  e.get_current();
+									//	alert("Name :" + c.get_name() + " and  sID: " + c.get_id());
+										 if(c.get_name() == params.name){
+																			$sp.wf.startWorkflow({
+																					name: params.name,
+																					list: params.list,
+																					id:    params.id,
+																					subscriptionId:  c.get_id(),																
+																			});
+																		}
+										
+									};
+									while(enumerator.moveNext()){
+											var workflow = enumerator.get_current();		   
+										if(workflow.get_name() == 'empty'){ 
+												$sp.wf.start2010Workflow({   		name: params.name,
+																					list: params.list,
+																					id:    params.id,
+																					initiationParams: "",		
+																			});
+										}
+									}
+								},
+								function(){ alert("error  with delete workflow.");}
+							);
+			
+}
+/*********************************************************************************************************************************************************/
+findMissing = function(){  alert
+			 var  clientContext = SP.ClientContext.get_current();
+			var  list = clientContext.get_web().get_lists().getByTitle('TempList');
+		 
+			  var query = new SP.CamlQuery();
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID' />"
+									+ "  </OrderBy>"
+									+ "<Where>"	
+									+ " <And>"	
+									+ "  <Geq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Number'> 0</Value>"
+									+ "  </Geq>"
+									+ "  <Leq>"
+									+ "       <FieldRef Name='ID' />"
+									+ "       <Value  Type='Number'> 500 </Value>"
+									+ "  </Leq>"
+									+ "  </And>"	
+									+ " </Where>"		
+									+ "</Query>"
+									+ "<ViewFields>"
+									+ "   <FieldRef Name='Title1' />"
+									+ "   <FieldRef Name='_x0049_D1' />"
+									+ "   <FieldRef Name='ID' />"									
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this._pendingItems = list.getItems(query);
+				clientContext.load(this._pendingItems);		
+				       
+				 this.workflows = list.get_workflowAssociations();  // This will only call SP2010 workflow NOT SP 2013's
+				 clientContext.load(this.workflows);
+				 
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.onSucceess), Function.createDelegate(this, this.onFailed));
+			
+}
+
+onSucceess = function(){  
+			var theId = "";
+var listEnumerator = this._pendingItems.getEnumerator();
+	while(listEnumerator.moveNext()){  
+							var item = listEnumerator.get_current().get_fieldValues();	
+							
+							for(var j=20; j< 26; j++){															
+									if($.isNumeric(item.Title1.substring(j,j+1)))theId +=item.Title1.substring(j,j+1);
+									if(item.Title1.substring(j,j+1) == '/')break;
+							}	
+								
+							     itemArr.push(item._x0049_D1);
+							 theId = "";
+											
+					}
+									
+				for(var i=0; i< itemArr.length; i++){
+					for(var j=0; j< currentList.length; j++){ 
+						if(itemArr[i] == currentList[j].Adjid){  itemArr.splice(i,1);}
+					}
+				}
+				
+				alert('new length is     ' + itemArr.length);
+				for(var k=0; k< itemArr.length; k++){if(itemArr[k] < 11789)alert('id =      ' + itemArr[k]);}
+}
+onFailed = function(){
+
+}
+ </script>
+ </head>
+  
+ <body>
+<button type="button" onclick="runWorkflow()">Move List Items</button>
+<button type="button" onclick="updateItems()">Update List Items</button>
+<button type="button" onclick="emptyItems()">Empty List </button>
+ </body>
+ </html>
