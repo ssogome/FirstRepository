@@ -3,9 +3,12 @@
 <script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery-1.11.3.min.js"></script>
 <script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/knockout-3.3.0.js"></script>
 <script  type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery.SPServices-2014.02.min.js"></script>
+<script type="text/javascript"   src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/accounting.min.js"></script>
 
 <script type="text/javascript">
-	var theBuId = "";
+	var theBuInfo = [];
+	var theBuAcceptValues = [];
+	var dt = new Date();
 
 $(function(){ 				
 			
@@ -14,7 +17,7 @@ $(function(){
 });
 /******************************************************************************************************/
 	// Function returns all  Groups 
-function getAllGroupsFromSite(){
+function getAllGroupsFromSite(){  
 	$().SPServices({
                         operation: "GetGroupCollectionFromSite",
                         async: false,
@@ -25,20 +28,25 @@ function getAllGroupsFromSite(){
                                                                                            });
                         }
 			});
-}	
+}
+/***********************************************************************************************/	
 	// Function returns all users in respective Groups                                           
-function getAllUsersFromGroup(groupName) {alert('0---------' + theBuId);		
+function getAllUsersFromGroup(groupName) {	
 // alert(groupName);
 		$().SPServices({
                        operation: "GetUserCollectionFromGroup",
                        groupName: groupName,
                        async: false,
                        completefunc: function (xDataUser, Status) {
-                                    $(xDataUser.responseXML).find("User").each(function() {
-										   alert($(this).attr("Name").trim()+  $(this).attr("ID")  );
+                            $(xDataUser.responseXML).find("User").each(function() {
+//alert($(this).attr("Name").trim()+  $(this).attr("ID")  +'---------0--------\n-' + theBuInfo[0].Id +'---------0--------\n-' + theBuInfo[0].BuId +'---------0--------\n-' + theBuInfo[0].etag);
+										if($(this).attr("ID")  == theBuInfo[0].BuId){
+											
+											DoBuPreApproval(theBuInfo[0].Id, theBuInfo[0].BuName, theBuInfo[0].etag, theBuInfo[0].comment, theBuInfo[0].hist);
+										}		   
 												
-									});
-                                    }
+							        });
+                            }
         });
 }
 
@@ -46,56 +54,25 @@ function getAllUsersFromGroup(groupName) {alert('0---------' + theBuId);
 
 /************************************************************************************************/
 					
-onGetDefaultViewSuccessed = function(itemList){	 alert('0123');
-    for(var i=0; i<itemList.length; i++){
-					theBuId = itemList[i].BU_x0020_ApproverId;
-			//Get All SharePoint Groups
-					getAllGroupsFromSite();    alert(itemList[i].BU_x0020_ApproverId);
+onGetDefaultViewSuccessed = function(itemList){//	 alert('0123');
+    for(var i=0; i<itemList.length; i++){  // alert(itemList[i].buStateValues  + '-----id =   ' + itemList[i].BU_x0020_Approver.ID + '\n'+ itemList[i].History);
+		if(itemList[i].Request_x0020_Status == 'Pending BU approval'){	 alert(); 
+		theBuInfo.push({ BuId: itemList[i].BU_x0020_Approver.ID, BuName:itemList[i].BU_x0020_Approver.Title,  etag:itemList[i].__metadata.etag, Id:itemList[i].Id, comment:itemList[i].Accept_x0020_Comment, hist:itemList[i].History});
+					theBuAcceptValues = itemList[i].buStateValues.split(";");  
+			// alert(itemList[i].Funding_x0020_Type+' == '+theBuAcceptValues[2]  + '\n' + accounting.formatMoney(itemList[i].Estimated_x0020_Cost)+' == '+ theBuAcceptValues[3]); 		
+			//Get All SharePoint Groups  if there is no need to upload the request
+				if(itemList[i].Funding_x0020_Type == theBuAcceptValues[2] && accounting.formatMoney(itemList[i].Estimated_x0020_Cost) == theBuAcceptValues[3])getAllGroupsFromSite(); theBuInfo.splice(0, theBuInfo.length);  		   		   			   			   			   
+				theBuAcceptValues.splice(0, theBuAcceptValues.length);
 			   
-			   
-			   
-			   
-			   
-			   
-	  		     if(itemList[i].Request_x0020_Status == 'Pending BU approval' ){ 
-			       if(theCurrentUserID == itemList[i].BU_x0020_ApproverId){                  				   
-			var theDisplayUrl = "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Lists/Equipment%20Request/DispForm.aspx?ID="+ itemList[i].Id+ "&Source=";
-     	    theDisplayUrl +="https%3A%2F%2Fhpenterprise%2Esharepoint%2Ecom%2Fteams%2FProcurementTEST%5FO365%2FLists%2FEquipment%2520Request%2FAllItems%2Easpx&ContentTypeId=0x01001E97B44A0AE01348961FDD9361B2E096";           				                 	 						   
-				
-				/*******************************************************/
-									          
-							  	newArr = (itemList[i].buStateValues).split(";");	
-					if(newArr[2] != itemList[i].Funding_x0020_Type || newArr[3] != accounting.formatMoney(itemList[i].Estimated_x0020_Cost)){ 
-							    self.requestEntries.push(new requestEntry( "<em><div style="+ "\"font-size:large;color:blue;" +"\"><a href=\" " + theDisplayUrl + "\" >" + itemList[i].AdjustedID + "</a></div></em>",															
-														    itemList[i].Region,														
-															itemList[i].Title,    
-															itemList[i].Business_x0020_Unit,
-															itemList[i].SubGroup,
-															itemList[i].Funding_x0020_Type,
-															accounting.formatMoney(itemList[i].Estimated_x0020_Cost),
-															itemList[i].Justification,
-															itemList[i].Requested_x0020_Quarter,
-															itemList[i].Request_x0020_Type,																												
-															itemList[i].Id,
-															itemList[i].__metadata.etag,
-															itemList[i].ApproverComments,
-															itemList[i].BreakFix_x002d_Spares,
-															itemList[i].Expedite));
-					}
-					if(newArr[2] == itemList[i].Funding_x0020_Type &&newArr[3] == accounting.formatMoney(itemList[i].Estimated_x0020_Cost)){
-						updateRequest('BU Approved', itemList[i].Id, itemList[i].__metadata.etag, itemList[i].ApproverComments, "Request was pre-approved at the BU Accept level.", onUpdateSuccess);
-					}							
-					
-				   }
-				 }
-			   }
+		}			
+	}
 }			   
 /*****************************************************************************************************/
   //Get the Request List for update
 getRequests  = function(callback){  
 							var restUrl =  "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/dev/_api/web/lists/GetByTitle('DevRequestList')/items"
 								+ "?$orderby=Created desc&$top=5000"			
-							+ "&$select=*";
+							+ "&$select=Accept_x0020_Comment,History, Request_x0020_Status, Funding_x0020_Type, Estimated_x0020_Cost, buStateValues, ID, Title,BU_x0020_Approver/ID,BU_x0020_Approver/Title&$expand=BU_x0020_Approver/ID";
                         								 
 						//Query the request list to display
 							$.ajax({
@@ -130,10 +107,52 @@ getUserInfo = function(){
     }
 });
 		
-}	
-</script>
-	
-	
+}
 
+/***********************************************************************************************************/
+DoBuPreApproval = function(id, approverName, etag, comment, hist){
+//	alert(id + '\n' + approverName + '\n' + etag + '\n'+  + '\n' + theBuAcceptValues);
+	updateRequest("BU Approved", id, etag, comment,  "The request was BU pre-approved", hist, approverName, onUpdateSuccess)
+}
+updateRequest =function(RequestApprovalLevel, id, etag, theComment, theNotes, theHistory, approverName, callback){ 
+//alert(RequestApprovalLevel + '\n' + id + '\n'+ etag+ '\n' + approverId + '\n'+ theHistory + '\n'+ theNotes);     
+	 var body ={  
+		 '__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+		  'Request_x0020_Status': RequestApprovalLevel,
+		  'ApproverComments': "This request was BU pre-approved.",
+		  'Approved_x0020_TimeStamp': dt,
+		  'History':    theHistory  + "\n" + "The request was moved from Pending BU Approval status to Fund status  as BU pre-approved on " + dt + " by " 	+ approverName +".",
+	 };
+//	 alert(theNotes + '\n' + theHistory + '\n' + body);
+	 body = JSON.stringify(body);
 	
+	 $.ajax({
+		url: "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/dev/_api/web/lists/GetByTitle('DevRequestList')/items/getbyid('" + id.toString() +"')",
+		type: "POST",
+		data: body,
+		headers:{
+			 "X-Http-Method": "PATCH",
+			 "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+			 "IF-MATCH": etag,
+			  "accept" : "application/json;odata=verbose",
+			 "content-type": "application/json;odata=verbose",
+			 "content-length": body.length
+		},
+	  success: function(data,status,resp){callback(id, resp.getResponseHeader("ETAG"));},
+	  error: function(err){//sendEmail(); 
+				alert("Microsoft Cloud Farm is Busy.  Please wait and then try again");}	
+         	 });
+ }
+ function onUpdateSuccess(){        
+     // location.replace(location.pathname);	
+ }
+/*****************************************
+	
+/_api/web/lists/getbytitle(listname)/items?$select=Title,Author/ID,Author/Title&$expand=Author/ID,Author/Title
+	
+/_api/web/lists/getbytitle(listname)/items?$select=Title,Author/ID,Author/FirstName,Author/LastName,Author/Title,Author/Department,Author/SipAddress&$expand=Author/ID	
+	
+	
+********************************************/ 
+</script>
 	
