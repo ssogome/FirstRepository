@@ -1,0 +1,538 @@
+<!doctype html>
+<html>
+<head>
+ <script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/knockout-3.3.0.js"></script>
+<link rel="stylesheet" type='text/css'  href="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/HTML%20Library/jquery-ui.min.css" />
+<script  type="text/javascript" src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/jquery.SPServices-2014.02.min.js"></script>
+<script type="text/javascript"   src="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Script%20Library/accounting.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/HTML%20Library/ApprovalProcessPageStyle.css" />
+
+
+<script type="text/javascript">
+	    var theId = "";	
+		var itemsToApproveArr = [];	
+	    var  theCurrentUser = "";	 
+	    var dt = new Date();
+			
+   $(function(){  
+    
+				//Get the current User info
+				getCurrentUser();
+	            //Load the model	
+		    $().SPServices({
+		              operation: 		"GetGroupCollectionFromUser",
+					  userLoginName:    $().SPServices.SPGetCurrentUser(),
+					  async:            false,
+					  completefunc:     function(xData, Status){
+					      if($(xData.responseXML).find("Group[Name='Procurement Test site Members']").length == 1){						          
+							  		ko.applyBindings(new setFieldViewModel());								
+						  }
+					  }	
+			});
+			
+				//Get Id of request to clone
+		    findRequestById  = function(){
+				theId = $('#searchById').val();
+					alert('the id is   ' + $('#searchById').val() );	  					   
+				  SP.SOD.executeFunc('sp.js', 'SP.ClientContext', startWkflow({
+																				listName:"Equipment Request",
+																				workflowName:"sp2010Copy",																			
+																				after: function(){SP.UI.Notify.addNotification("Workflow process started on selected item.", false); }}));
+	 
+			}	
+			
+        		  
+   });
+   
+/***********************************************************************************************************************************************/
+   function getCurrentUser(){ 
+	        	 
+		var clientContext = new SP.ClientContext.get_current();	
+		this.web = clientContext.get_web();
+		this.currentUser = web.get_currentUser();
+		clientContext.load(currentUser); 	  
+	
+			clientContext.executeQueryAsync(Function.createDelegate(this, this.onSuccess), Function.createDelegate(this, this.onFail));
+  }
+   function onSuccess(sender, args){  
+                $("#pageuser").html(currentUser.get_title());	 
+	            theCurrentUser = currentUser.get_title();
+				userEmail =   currentUser.get_email();	
+    }
+   function onFail(sender, args){
+	   alert('From ValidationPage.html: Failed to get current user info.' + args.get_message());
+   }
+   
+  /**************************************************************************************************************************/ 
+   function setFieldViewModel(){ 
+            var self = this;
+			 
+			self.RequestToProcess      = ko.observableArray();
+			self.selectedView		  =ko.observable(); 
+			self.selectedChoice      = ko.observable();
+			
+			  self.allTabs          = ko.observableArray([{ID:"Select Status", Value:"Select Status"},{ID:"New request", Value:"New request"}, {ID:"Pending BU Accept", Value:"Pending BU Accept"}
+			  ,{ID:"Pending Entry", Value:"Pending Entry"},{ID:"Ops Review", Value:"Ops Review"},{ID:"EngrArch Review", Value:"EngrArch Review"},{ID:"Ops feedback", Value:"Ops feedback"}
+			  ,{ID:"EngrArch feedback", Value:"EngrArch feedback"},{ID:"Pending BU approval", Value:"Pending BU approval"}, {ID:"BU Approved", Value:"BU Approved"}, {ID:"Funded", Value:"Funded"},{ID:"Processing", Value:"Processing"}
+			   ,{ID:"Submitted", Value:"Submitted"},{ID:"Ordered", Value:"Ordered"},{ID:"Partly Shipped", Value:"Partly Shipped"},{ID:"Blocked", Value:"Blocked"},{ID:"Shipped", Value:"Shipped"}
+			   ,{ID:"Received", Value:"Received"},{ID:"Rejected", Value:"Rejected"},{ID:"Cancelled", Value:"Cancelled"},{ID:"Partly Delivered", Value:"Partly Delivered"},{ID:"Completed", Value:"Completed"}
+			   ,{ID:"Parked", Value:"Parked"},{ID:"Fulfilled", Value:"Fulfilled"},{ID:"Expired", Value:"Expired"},{ID:"Superceded", Value:"Superceded"}]); 
+			  
+		
+	 
+	
+/*****************************************************************************************************************************************************************/
+	
+    self.viewRequestByStatus = function(){	
+				self.RequestToProcess([]);
+		//Get the requests
+		getRequests(self.onGetSuccessed);
+			
+	}
+	self.onGetSuccessed  =function(itemList){	
+				var filter = self.selectedView();
+		for(var i=0; i<itemList.length; i++){
+			if(itemList[i].Request_x0020_Status ==  filter ){
+			var theDisplayUrl = "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/Lists/Equipment%20Request/DispForm.aspx?ID="+ itemList[i].Id+ "&Source=";
+     	    theDisplayUrl +="https%3A%2F%2Fhpenterprise%2Esharepoint%2Ecom%2Fteams%2FProcurementTEST%5FO365%2FLists%2FEquipment%2520Request%2FAllItems%2Easpx&ContentTypeId=0x01001E97B44A0AE01348961FDD9361B2E096";           				                 	 						   
+					
+							    self.RequestToProcess.push(new requestEntry( "<em><div style="+ "\"font-size:large;color:blue;" +"\"><a href=\" " + theDisplayUrl + "\" >" + itemList[i].AdjustedID + "</a></div></em>",															
+														    itemList[i].Region,														
+															itemList[i].Title,    
+															itemList[i].Business_x0020_Unit,
+															itemList[i].SubGroup,
+															itemList[i].Funding_x0020_Type,
+															accounting.formatMoney(itemList[i].Estimated_x0020_Cost),
+															itemList[i].Justification,
+															itemList[i].Requested_x0020_Quarter,
+															itemList[i].Request_x0020_Type,																							
+															itemList[i].Id,
+															itemList[i].__metadata.etag,
+															itemList[i].Accept_x0020_Comment,
+															itemList[i].BreakFix_x002d_Spares,
+															itemList[i].Expedite,
+															itemList[i].History,
+															itemList[i].Request_x0020_Status));
+																				
+						
+			}				
+		}
+				
+	}
+	
+	self.processRequestByStatus = function(){	
+			 //  alert(ko.toJSON({selectionIs: self.selectedChoice()}) );
+			for(var req in itemsToApproveArr){   
+				switch(self.selectedChoice())
+				{
+						case 'New request': 
+						    updateRequest('New request', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment, "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+					    case 'Pending Entry': 
+							updateRequest('Pending Entry', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;
+						case 'Pending BU Accept':
+							updateRequest('Pending BU Accept', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Ops Review':
+							updateRequest('Ops Review', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment, "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;
+						case 'Ops Review Feedback':
+							updateRequest('Ops Review Feedback', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;		
+						case 'EngrArch Review':
+							updateRequest('EngrArch Review', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'EngrArch feedback':
+							updateRequest('EngrArch feedback', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Pending BU approval':
+							updateRequest('Pending BU approval', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment, "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;
+						case 'BU Approved':
+							updateRequest('BU Approved', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment, "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Funded':
+							updateRequest('Funded', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Processing': 
+							updateRequest('Processing', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Submitted':
+							updateRequest('Submitted', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;
+						case 'Ordered':
+							updateRequest('Ordered', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Partly Shipped':
+							updateRequest('Partly Shipped', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Blocked':
+							updateRequest('Blocked', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;
+						case 'Shipped':
+							updateRequest('Shipped', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Received':
+							updateRequest('Received', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Rejected':
+							updateRequest('Rejected', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Cancelled':
+							updateRequest('Cancelled', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Partly Delivered':
+							updateRequest('Partly Delivered', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Completed':
+							updateRequest('Completed', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Parked':
+							updateRequest('Parked', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case  'Fulfilled':	
+						   updateRequest('Fulfilled', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Expired':
+							updateRequest('Expired', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						case 'Superceded':
+							updateRequest('Superceded', itemsToApproveArr[req].itemID, itemsToApproveArr[req].itemEtag, itemsToApproveArr[req].itemComment,  "", itemsToApproveArr[req].itemHistory, itemsToApproveArr[req].itemStatus, onUpdateSuccess);	
+							break;	
+						default:
+							break;
+				}	
+			}
+	}
+	
+	self.chooseItem =function(sender, e){ // alert($(e.target).parent().next() + '\n' + e.target);				
+				  itemsToApproveArr.push(
+					{
+						itemID:         sender.id,
+						itemEtag:       sender.etag,					
+						itemComment:    sender.comment,
+						itemHistory:	sender.theHistory,
+						itemStatus:     sender.theStatus,
+					});	
+					
+				// $(e.target).parent().parent().next().show();	
+				 // Return true to allow default click action.
+    return true;
+	}
+	
+	
+} 
+
+/***********************************************************************************************************************************************/
+
+  //Get the Request List for update
+  getRequests  = function(callback){  
+							var restUrl =  "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/dev/_api/web/lists/GetByTitle('DevRequestList')/items"
+	                + "?$orderby=Created desc&$top=5000"			
+				  + "&$select=*";
+                        
+								 
+						//Query the request list to display
+							$.ajax({
+								url:   restUrl,
+								type: "GET",
+								headers: {
+									"accept": 'application/json;odata=verbose',
+								},
+								success: function(data){ 
+									callback(data.d.results); 
+								},
+								error: function(){
+										alert('Unable to load the  requests.');
+								}
+							});
+	};
+	
+   updateRequest =function(destinationStat, id, etag, theComment, theNotes, theHistory, currentStat, callback){
+		switch(destinationStat)
+		{
+			case 'Processing':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Processing_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break; 
+			case 'Submitted':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Submitted_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;
+            case 'Ordered':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Ordered_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Submitted':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,									
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;					 
+			case 'Blocked':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Blocked_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;
+            case 'Shipped':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Shipped_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;
+            case 'Received':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Received_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Rejected':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Rejected_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Cancelled':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,									
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Partly Delivered':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,										
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Completed':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Completed_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;	
+            case 'Parked':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Parked_x0020_TimeStamp':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;
+            case 'Fulfilled':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,										
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;
+            case 'Expired':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,					
+					'Expediate_x0020_Ship_x0020_Date':  dt,
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break; 
+            case 'Superceded':
+				var body ={  
+					'__metadata':{'type': 'SP.Data.DevRequestListListItem'},
+					'Request_x0020_Status': destinationStat,										
+					'History':       theHistory + '\n' + "The request was moved from "  + currentStat + " to " + destinationStat + " status on " + dt + " by " + theCurrentUser+".",	
+					   };	
+					 break;					 
+		}
+	 
+	 body = JSON.stringify(body);
+
+	 $.ajax({
+		url: "https://hpenterprise.sharepoint.com/teams/ProcurementTEST_O365/dev/_api/web/lists/GetByTitle('DevRequestList')/items/GetById('" + id.toString() +"')",
+		type: "POST",
+		data: body,
+		headers:{
+			 "X-Http-Method": "PATCH",
+			 "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+			 "IF-MATCH": etag,
+			  "accept" : "application/json;odata=verbose",
+			 "content-type": "application/json;odata=verbose",
+			 "content-length": body.length
+		},
+	  success: function(data,status,resp){SP.UI.Notify.addNotification("Update process started on selected item.", false);
+											 location.replace(location.pathname);	},
+	  error: function(err){//sendEmail(); 
+	  alert("Microsoft Cloud Farm is Busy.  Please wait and then try again");}	
+	 });
+ }
+ 	   
+ function onUpdateSuccess(){      
+	  location.replace(location.pathname);	
+ }	
+/****************************************************************************************************************/
+function  requestEntry(theID, theRegion, theTitle,  theBU, theSubgroup, theCEEL, theCost, theJustification, theQtr, theReqType, id, etag, theComment, breakFix, expedite, theHistory, theStat){
+//	alert(theID+'\n' + theRegion+ '\n'+ theTitle+ '\n'+  theBU+'\n'+ theSubgroup+'\n'+ theCEEL+ '\n'+ theCost+'\n' +theJustification+'\n' +theQtr+ '\n'+theReqType+'\n'+ id+'\n'+ etag+ '\n' + theComment+'\n' +  breakFix+ '\n'+  expedite+ '\n'+ theHistory);  
+	 var self  = this;  
+	 self.wantApproval      = ko.observable(false);	
+	 self.theID             = ko.observable(theID);  
+	 self.theRegion         = ko.observable(theRegion);
+	 self.theTitle          = ko.observable(theTitle); 
+	 self.theBU             = ko.observable(theBU);
+     self.theSubgroup       = ko.observable(theSubgroup);	 
+	 self.theCEEL           =theCEEL;  	
+	 self.theCost           = theCost;
+     self.theJustification  = ko.observable(theJustification);
+	 self.theQtr            =ko.observable(theQtr);
+     self.theReqType        = ko.observable(theReqType);      
+     self.id  = id;
+	 self.etag = etag;
+     self.comment =  theComment;
+	 self.theStatus      =      theStat;
+	  self.theHistory  		= theHistory;
+     var exp = "";	
+	 if(expedite == true)exp = "true"; 
+	 else exp = "false"; 	
+
+		
+		switch(breakFix){
+			case 'Yes': self.currentExpStatus = -1; 
+				switch(exp){
+					case 'true': self.currentStatus = -1; break;
+					case 'false': self.currentStatus = 1; break;
+					default:      break;
+				}			
+			break;
+			case 'No': self.currentExpStatus = 1; 
+				switch(exp){
+					case "true": self.currentStatus = -1; break;
+					case "false":  self.currentStatus = 1; break;
+					default:     break;
+				}
+			break;
+		default:   break;
+		}		 
+		
+}
+
+
+  
+</script>
+<div align="right">
+			Enter request ID  <input type="text"  id="searchById" />
+			<button type="button" onclick="findRequestById()"; style="background-color:yellow"  >Clone And Update</button>
+</div>	
+<br /><br />
+<div id="reset">
+  <br /><br />
+  View requests in <select  data-bind="options: $root.allTabs, optionsText: 'Value', optionsValue: 'ID', value: $root.selectedView"></select>
+			<button data-bind="click: $root.viewRequestByStatus" style="background-color:orange"  >View</button>
+			<br /><br />
+  Process requests in <select  data-bind="options: $root.allTabs, optionsText: 'Value', optionsValue: 'ID', value: $root.selectedChoice"></select>
+			<button data-bind="click: $root.processRequestByStatus" style="background-color:lime"  >Process</button>
+  <br /><br />
+  </div>
+
+<table width="100%" class="thetopHeadtable">
+   <tr>
+    <td class="globalTitle_left">&nbsp;</td>
+    <td class="globalTitle_center">--HPE Software Procurement Governance--<br>
+	 <div id="approvalType"></div>
+	</td>
+    <td class="globalTitle_right">
+  <table>
+    <tr>
+	   <td><span class="InfoTitle">Date:</span></td>
+	   <td><span class="Infotext" id="pagedate"></span></td>
+	</tr>
+     <tr>
+	     <td><span class="InfoTitle">User:</span></td>
+	     <td><span class="Infotext" id="pageuser"></span></td>
+	</tr>
+    <tr>
+		 <td><span >BU:</span></td>
+		 <td><span></span></td>
+	</tr>
+</table>
+   </td>
+  </tr> 
+  </table>
+</head>
+<body>
+<div id="pageBodyContainer">
+ <table width="100%" border="1" cellspacing="0" cellpadding="25">
+    <thead style="background-color:gray;color:white; font-size:large;font-weight:bold">
+	     <tr>
+		     <td></td>
+		    <td> ID #</td>
+			<td> Region </td>
+			<td> Title</td>
+			<td> BU </td>
+			<td> SubGroup</td>
+			<td> C/E/EL</td>
+			<td> Cost</td>	
+			<td> Justification</td>
+		    <td> Qtr </td> 		`
+			<td> Req Type </td>	
+		
+		 </tr>
+	</thead>
+	<tbody data-bind="foreach: RequestToProcess()">
+	    <tr data-bind="style:{backgroundColor: currentExpStatus < 0 ? 'orange' : '',color: currentStatus < 0 ? 'red' : ''}">
+		   <td>				   
+					  <a href="#"  data-bind="click: $root.chooseItem" ><input type="checkbox" data-bind="checked: wantApproval" /></a>					
+			</td>
+		    <td data-bind="html: theID"></td>
+			<td data-bind="text: theRegion"></td>
+			<td data-bind="text: theTitle"></td>
+			<td data-bind="text: theBU"></td>
+			<td data-bind="text: theSubgroup"></td>
+			<td data-bind="text: theCEEL"></td>
+			<td data-bind="text: theCost"></td>
+			<td data-bind="text: theJustification"> </td>
+			<td data-bind="text: theQtr"></td>
+			<td data-bind="text: theReqType"></td>			
+		</tr>
+		
+	</tbody>
+	<tfoot style="background-color:lightgray">
+	  <tr>
+	     <td colspan="5" style="font-size:large; font-weight:bold"> HPE Confidential-Not to be disclosed to unauthorized personnel. </td>
+		 <td colspan="3" style="color:red; background-color: white; font-size:large; font-weight:bold"> Red Text=Expedited</td>
+		 <td colspan="4" style="color:black; background-color:DeepPink;font-size:large; font-weight:bold"> Orange background=Break/Fix or Spares</td>
+	  </tr> 
+	</tfoot>
+  </table> 
+</div>
+
+
+</body>
+</html>
+
+
