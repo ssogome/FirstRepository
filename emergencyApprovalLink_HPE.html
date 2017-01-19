@@ -1,7 +1,8 @@
 <!Doctype html>
 <html>
 <head>
-<script type='text/javascript' src="https://hpenterprise.sharepoint.com/teams/IS-TTR/JSscript%20Library/jquery-1.11.3.min.js"></script>
+<!--<script type='text/javascript' src="https://hpenterprise.sharepoint.com/teams/IS-TTR/JSscript%20Library/jquery-1.11.3.min.js"></script>-->
+<!--<script type='text/javascript' src="https://hpe.sharepoint.com/teams/IS-TTR/JSscript%20Library/jquery-1.11.3.min.js"></script>-->
 <script type="text/javascript">
 	  var BmanagerEmail = "";
  $(function(){	
@@ -28,23 +29,33 @@ function showLink(){
  self.showLinkFailed = function(sender, args){
 	   alert('Unable to show the link to approve amergency requests on behalf of team manager. ' + args.get_message() );
  }
-	//HTML variable value
+	//For HTML use
 	openPage = function(){
-	     var    siteCollectionObj =  _spPageContextInfo ;//SP.ClientContext.Current.Web.Site.WebApplication.Sites[0].Url; 
+	        ///protocol used
+	var  protocol = window.location.protocol  +  "//"    ;
+	     //Host Url
+	var   host = 	 window.location.host ;
+    var    siteCollectionObj =  _spPageContextInfo ; 
 	 // site Absolute Url
-	 var  siteURL = siteCollectionObj.webAbsoluteUrl; //SP.ClientContext.Current.Web.Site.Url;
+	 var  siteUrl = siteCollectionObj.webAbsoluteUrl; 
 	 //   page Absolute Url
-	 var pageUrl  = siteCollectionObj.siteAbsoluteUrl;
+	 var  siteCollectionUrl  = siteCollectionObj.siteAbsoluteUrl;
+	 //	site Relative Url
+	 var  relUrl = _spPageContextInfo.webServerRelativeUrl;
+	 //  root site collection relative Url
+	 var   rootSiteCollectionUrl = _spPageContextInfo.siteServerRelativeUrl;
+     //Current site absolute Url
+     var AbsUrl = _spPageContextInfo.webAbsoluteUrl;	 
 	 
-          alert(_spPageContextInfo.webServerRelativeUrl + '\n' +  siteCollectionObj + '\n' + siteURL  + '\n' + pageUrl);	
-		location.href = pageUrl  + '/SitePages/Alternate%20Approval%20Page.aspx';   
+          alert(protocol + '\n' +  host   + '\n' + relUrl + '\n' +   siteCollectionUrl+ '\n' + rootSiteCollectionUrl   + '\n' + siteUrl  + '\n' + siteCollectionUrl + '/SitePages/Alternate%20Approval%20Page.aspx'  + '\n' + AbsUrl);	
+		location.href = siteCollectionUrl  + '/SitePages/Alternate%20Approval%20Page.aspx';   
 	}
 </script>	
 </head>
 <body>
 <div id="emergencyLink" style="display:none">
-  <a href="https://hpenterprise.sharepoint.com/teams/IS-TTR/SitePages/Alternate%20Approval%20Page.aspx"style="font-weigth:bold;font-size:x-large;color:green;"> All Team Managers List</a> <br />
-  <a href = "javascript:openPage()" >Test</a>
+  <!--<a href="https://hpenterprise.sharepoint.com/teams/IS-TTR/SitePages/Alternate%20Approval%20Page.aspx"style="font-weigth:bold;font-size:x-large;color:green;"> All Team Managers List</a> <br />-->
+  <a href = "javascript:openPage()" style="font-weigth:bold;font-size:x-large;color:green;"> All Team Managers List </a>
 </div>
 </body>
 </html>
