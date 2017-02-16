@@ -1,0 +1,49 @@
+******************************			Files Used    **************************************************************
+1.emargencyApprovalLink.html
+2.FinancePage.html (likely not used!!!)
+3.NewTravelRequestLink.html
+4.saveTravelrequest.js
+5.TravelRequestNav1.html
+6.TravelRequestNav2.html
+7.TravelRequestNav3.html
+
+***********************************			Pages Used 				*******************************************************
+budget (Not in use)
+Budget Page  (2 webparts: for Budget Manager approval-ListView webpart- and link to table with budget update-Nav3- )
+Alternate Approval Page (List View Webpart. No code involved)
+Team Manager Page (2 listview webparts-waiting on approval and reviewed already-  and link to All Team Managers List)
+Landing Page (3 webparts: 1 script editor for readme, 1 listview webpart and 1 content editor webpart with html content below:
+                .Enter a new request: link to NewForm 
+				.L4 Managers Only: link to Team Manager Page
+				.Budget Approvers Only: link to Budget Page
+				.Book Travel: link to CWT Account Page)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ In each .html  file, 3 main components ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+---------------------------------------------------------------              1*     LIBRARIES  LINKS		-----------------------------------------------------------------------------
+Currently must be manually changed.
+
+---------------------------------------------------------------				  2*     .js   SCRIPT   	    ------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------				  3*     HTML BODY   			------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  For  pure .js file  apply step 2* above     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<p>
+   <span style="font-size: x-large; font-weight: bold;">ENTER A NEW REQUEST:&#160; 
+      <a href="/teams/IS-TTR/Lists/Travel%20and%20Training%20Request/NewForm.aspx?Source=https%3a//hpenterprise.sharepoint.com/teams/IS-TTR/_layouts/15/start.aspx#/SitePages/Home.aspx" style="color: green; font-size: x-large;">Click here to enter new request</a> </span></p> 
+<span style="font-size: x-large; font-weight: bold;">L4 MANAGERS ONLY:</span><a href="/teams/IS-TTR/SitePages/Team%20Manager%20Page.aspx#InplviewHash82e5beaf-d590-42ed-862c-05aeecaf4c18=ShowInGrid%3DTrue%23InplviewHash948aa593-3e6e-46e3-b7f3-fa7af64e9994=ShowInGrid%3DTrue" style="color: green; font-size: x-large;"> Click here to view requests waiting on manager approval</a> 	<br/><br/><span style="font-size: x-large; font-weight: bold;">BUDGET APPROVERS ONLY:</span><a href="/teams/IS-TTR/SitePages/Budget%20Page.aspx#InplviewHash412bec9f-8caa-4c96-a95d-2babf8b442d6=ShowInGrid%3DTrue" style="color: green; font-size: x-large;">Click here to view requests waiting on budget approval</a><br/><br/><span style="font-size: x-large; font-weight: bold;">BOOK TRAVEL:</span> 	<a href="https://sso.carlsonwagonlit.com/login.do?host=https://portal.carlsonwagonlit.com&amp;CT_ORIG_URL=/&amp;ct_orig_uri=/" style="font-size: x-large; font-weight: bold;">Once approved, click here to book your trip  </a> (Only after you  received a final approval email) 
+<p>&#160;</p> 
+<br/>
+<br/> 
+<span style="font-size: x-large; font-weight: bold;">USER GUIDE:</span> 	<a href="/teams/IS-TTR/_layouts/15/WopiFrame.aspx?sourcedoc=%7b89A0A3F8-37EB-4C15-BC30-A73A12411049%7d&amp;file=New%20IS%20Travel%20and%20Training%20Reqest%20Site%20user%20guide.docx&amp;action=default" style="font-size: x-large; font-weight: bold;">Click here</a>
+<p>&#160;</p> 
+<br/>
+<br/> 
+<span style="font-size: x-large; font-weight: bold;">For site support issues, please send email to :</span> IS_TravelSite_Support@hpe.com	      
