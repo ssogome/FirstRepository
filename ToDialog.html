@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/knockout-3.3.0.js"></script>
+<script  type="text/javascript" src="/teams/HPESS-Equipment/Script%20Library/jquery.SPServices-2014.02.js"></script>
+
+
+<script type="text/javascript">
+				
+		var  selectArr = [];
+		
+		
+$(document).ready(function(){   
+    SP.SOD.executeFunc('sp.js', 'SP.ClientContext', function doLoad(){});  
+	ko.applyBindings(new BudgetViewModel());
+});
+
+BudgetViewModel = function(){ 
+		var self = this;
+		     self.PartOption   = ko.observableArray();
+			query = window.frameElement.dialogArgs;   
+	/*		 var query = window.location.search;			
+	    if (query.substring(81, 82) == '?') {
+			query = query.substring(82);
+        }*/		
+		//   alert('query = ' +query );
+			
+	var data = query.split(','); 
+	
+		for(var l=0; l< data.length; l++){
+		
+				self.PartOption.push({				 
+				 partReference:		data[l].replace(/%20/g, " ").replace(/%28/g, "(").replace(/%29/g, " )").replace(/%2C/g, " ,"),				
+				});		
+		}		
+	
+   self.onSelectItem = function(sender, e){		
+								
+				selectArr.push({				 
+				 ref:		sender.partReference,				
+				});	
+			return true;		
+   }
+}
+submitPartModel = function(sender, e){		  
+		 SP.UI.ModalDialog.commonModalDialogClose(SP.UI.DialogResult.ok, selectArr);
+} 
+
+</script>
+</head>
+<body>
+ <input  style="background-color:orange" id="choice" value="Submit" type="button" onclick="submitPartModel()" />
+ <br /><br />
+<table  width="100%" border="1" cellspacing="0" cellpadding="25">
+    <thead style="background-color:gray;color:white; font-size:large;font-weight:bold">
+	     <tr>
+	        <td> Select your part</td>	
+			<td></td> 			
+		 </tr>
+	</thead>
+	<tbody data-bind="foreach: PartOption">
+	    <tr>
+			<td> <a href="#"  data-bind="click: $root.onSelectItem"><input type="checkbox"  /></a></td>		
+			<td data-bind="text: partReference"></td>							
+		</tr>		   
+	</tbody>
+	<tfoot style="background-color:lightgray">
+	  <tr>
+	     <td colspan="2" style="font-size:large; font-weight:bold;background-color:red"> </td>		 
+	  </tr> 
+	</tfoot>
+  </table>
+</body>  
+</html>

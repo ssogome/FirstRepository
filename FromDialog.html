@@ -1,0 +1,95 @@
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/teams/gdc-hpsw/testsite/Script%20Library/knockout-3.3.0.js"></script>
+
+
+<script type="text/javascript">
+		
+			var init = "";
+			var packed = "";
+			
+  $(document).ready(function(){    
+		$("input[title='Device Model #2 Required Field']").keypress(function(){
+			//alert($("input[title='Device Model #2 Required Field']").val().length);
+			if($("input[title='Device Model #2 Required Field']").val().length > 2){
+				    init = $(this).val().substring(0,3);
+					sortReferenceList();
+					alert("Please find the part in the list"); execute();  
+					
+			}		
+			
+		});
+  });
+
+execute =function(){		
+	//sortReferenceList();
+				
+	var PartOptions ={
+	   url: "/teams/gdc-hpsw/SitePages/Parts%20Reference%20Page.aspx",	
+	   args:    packed,		 //This is what is passed on the the dialog page 
+	   dialogReturnValueCallback: function(dialogResult, returnValue){ 
+									if(dialogResult == SP.UI.DialogResult.ok){
+											//	SP.UI.Status.removeAllStatus(true);
+											//	var sId = SP.UI.Status.addStatus("Data successfully populated to text boxes from Pop-up");
+											//	SP.UI.Status.setStatusPriColor(sId, 'green');
+										SP.UI.Notify.addNotification("The user clicked the OK button  "  +  returnValue.length, false);	
+										if(returnValue.length != 1)alert("Please select only one part reference.");
+										for(var j=0; j< returnValue.length; j++){
+											//alert('The number of chosen  budget is ' +returnValue.length + '\n and values are ' + returnValue[j].ref );
+												$("input[title='Device Model #2 Required Field']").val(returnValue[j].ref);	
+										}
+																												
+									}	
+									else SP.UI.Notify.addNotification("The user clicked the cancel button  " , false);
+								//Where you can do additional JS function base on the dialogResult.
+								SP.UI.ModalDialog.RefreshPage(dialogResult);
+								}
+	};
+	//alert(' packed is    '   + packed);
+	if(packed != ""){ 
+		SP.SOD.execute('sp.ui.dialog.js', 'SP.UI.ModalDialog.showModalDialog', PartOptions);
+			packed = [];
+	}
+	else alert("Your model part is not registered. Please contact ....@hpe.com");
+}
+ 
+function sortReferenceList(){
+	//alert('sort');
+	var  clientContext = new SP.ClientContext("/teams/gdc-hpsw/testsite"); //.get_current();			 
+			  var  list = clientContext.get_web().get_lists().getByTitle('Standard Parts Reference');
+			
+			  var query = new SP.CamlQuery();
+			    query.set_viewXml("<View>"
+									+ "<Query>"
+									+ "  <OrderBy>"
+									+ "   <FieldRef Name='ID' />"
+									+ "  </OrderBy>"																	
+									+ "</Query>"
+									+ "<ViewFields>"									
+									+ "     <FieldRef Name='Title' />"																									
+									+ "</ViewFields>"
+									+ "<RowLimit>5000</RowLimit>"
+									+ "</View>");
+									
+				this.pendingItems = list.getItems(query);
+				clientContext.load(this.pendingItems);		
+			
+				clientContext.executeQueryAsync(Function.createDelegate(this, this.onLoadSucceeded), Function.createDelegate(this, this.onLoadFailed)); 
+}
+onLoadSucceeded = function(){  		
+	 var listEnumerator = this.pendingItems.getEnumerator();
+	while(listEnumerator.moveNext()){ 
+					var  lstItm = listEnumerator.get_current();
+					var item = listEnumerator.get_current().get_fieldValues();
+			   					
+				if(item.Title.substring(0,3).toLowerCase() == init.toLowerCase()){ 
+						packed += escape(item.Title);
+						packed += ",";						
+				}
+	}
+	
+}
+onLoadFailed = function(){	
+	 alert('From  findDeviceModel.js: Unable to load Parts Reference list. ' + args.get_message() + '\n' + args.get_stackTrace());
+}	 
+</script>
